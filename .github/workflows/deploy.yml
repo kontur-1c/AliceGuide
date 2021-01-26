@@ -16,5 +16,5 @@ jobs:
         memory: '128'
         environment: DEBUG=True
         entrypoint: 'main.handler'
-        source: './cluedo'
-        exclude: './cluedo/tests'
+        source: './guide'
+        exclude: './guide/tests'
