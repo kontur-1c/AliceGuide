@@ -8,6 +8,7 @@ from guide.alice import Request
 from guide.responce_helpers import button
 from guide.scenes_util import Scene
 from guide import intents
+from guide.state import STATE_REQUEST_KEY
 
 
 class QuestionType(enum.Enum):
@@ -91,6 +92,7 @@ class StartGame(Scene):
 
 @dataclass
 class QuestionRecord:
+    id: int
     questiontype: QuestionType
     text: str
     # answer_type: ...
@@ -98,16 +100,23 @@ class QuestionRecord:
     # buttons: Optional[str]
 
 
-questions_db = [
-    QuestionRecord(
-        QuestionType.SIMPLE, "Задаю простой вопрос. Какова общая высота памятника?", 15
+questions_db = {
+    1: QuestionRecord(
+        1,
+        QuestionType.SIMPLE,
+        "Задаю простой вопрос. Какова общая высота памятника?",
+        15,
     ),
-    QuestionRecord(
+    2: QuestionRecord(
+        2,
         QuestionType.SIMPLE,
         "Задаю сложный вопрос. Сколько поэтов, стихотворения которых изучают в школе, изображны на памятнике?",
         6,
     ),
-]
+    3: QuestionRecord(
+        3,
+    ),
+}
 
 
 class QuestionScene(Scene):
@@ -115,13 +124,14 @@ class QuestionScene(Scene):
         q = QuestionType.from_request(request, intents.GAME_QUESTION)
         text = ""
         if q == QuestionType.SIMPLE:
-            q = random.choice(questions_db)
+            q_id = random.choice(questions_db.keys)
+            q = questions_db[q_id]
             text = q.text
         elif q == QuestionType.HARD:
             text = "Задаю сложный вопрос..."
         elif q == QuestionType.ATTENTION:
             text = "Задаю вопрос на внимательность..."
-        return self.make_response(text)
+        return self.make_response(text, state={"question_id": q_id})
 
     def handle_local_intents(request: Request):
         return AnswerScene()
@@ -132,7 +142,18 @@ class QuestionScene(Scene):
 
 class AnswerScene(Scene):
     def reply(self, request: Request):
-        ...  # TODO
+        q_id = request.request_body["state"][STATE_REQUEST_KEY]["question_id"]
+        q = questions_db[q_id]
+        if request.request_body["request"]["original_utterance"] == q.answer:
+            self.make_response("Верно")
+        else:
+            self.make_response("Не верно")
+
+    def handle_local_intents(request: Request):
+        return QuestionScene()
+
+    def handle_global_intents(self):
+        pass
 
 
 def _list_scenes():
