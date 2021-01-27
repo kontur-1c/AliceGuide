@@ -32,14 +32,13 @@ REQUEST = {
 
 
 def test_play_game():
-    pass
-    # response = handler(REQUEST, None)
+    response = handler(REQUEST, None)
 
-    # # 1. В качестве сцены должны установить старт викторины
-    # assert response["session_state"]["scene"] == "StartGame"
+    # 1. В качестве сцены должны установить старт викторины
+    assert response["session_state"]["scene"] == "StartGame"
 
-    # # Должены быть кнопки с типами вопросов
-    # button_titles = "\n".join(
-    #     b["title"] for b in response["response"]["buttons"]
-    # ).lower()
-    # assert "простой" in button_titles
+    # Должены быть кнопки с типами вопросов
+    button_titles = "\n".join(
+        b["title"] for b in response["response"]["buttons"]
+    ).lower()
+    assert "простой" in button_titles

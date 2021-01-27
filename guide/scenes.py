@@ -73,7 +73,6 @@ class StartGame(Scene):
         )
         return self.make_response(
             text,
-            state={"question_type": self.question_type.name},
             buttons=[
                 button("Простой"),
                 button("Сложный"),
@@ -83,8 +82,6 @@ class StartGame(Scene):
 
     def handle_local_intents(self, request: Request):
         if intents.GAME_QUESTION:
-            question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
-            self.question_type = question_type
             return Question()
 
     def handle_global_intents(self):
@@ -93,8 +90,7 @@ class StartGame(Scene):
 
 class Question(Scene):
     def reply(self, request: Request):
-        s = request["state"][STATE_RESPONSE_KEY]["question_type"]
-        q = QuestionType[s]
+        q = QuestionType.from_request(request, intents.GAME_QUESTION)
         text = ""
         if q == QuestionType.SIMPLE:
             text = "Задаю простой вопрос..."

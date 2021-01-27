@@ -53,6 +53,5 @@ REQUEST = {
 
 
 def test_play_game():
-    pass
-    # response = handler(REQUEST, None)
-    # assert response  # TODO
+    response = handler(REQUEST, None)
+    assert response  # TODO
