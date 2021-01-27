@@ -1,12 +1,13 @@
 import inspect
 import sys
 import enum
+from dataclasses import dataclass
+import random
 
 from guide.alice import Request
 from guide.responce_helpers import button
 from guide.scenes_util import Scene
 from guide import intents
-from guide.state import STATE_RESPONSE_KEY
 
 
 class QuestionType(enum.Enum):
@@ -82,28 +83,56 @@ class StartGame(Scene):
 
     def handle_local_intents(self, request: Request):
         if intents.GAME_QUESTION:
-            return Question()
+            return QuestionScene()
 
     def handle_global_intents(self):
         pass
 
 
-class Question(Scene):
+@dataclass
+class QuestionRecord:
+    questiontype: QuestionType
+    text: str
+    # answer_type: ...
+    answer: int
+    # buttons: Optional[str]
+
+
+questions_db = [
+    QuestionRecord(
+        QuestionType.SIMPLE, "Задаю простой вопрос. Какова общая высота памятника?", 15
+    ),
+    QuestionRecord(
+        QuestionType.SIMPLE,
+        "Задаю сложный вопрос. Сколько поэтов, стихотворения которых изучают в школе, изображны на памятнике?",
+        6,
+    ),
+]
+
+
+class QuestionScene(Scene):
     def reply(self, request: Request):
         q = QuestionType.from_request(request, intents.GAME_QUESTION)
         text = ""
         if q == QuestionType.SIMPLE:
-            text = "Задаю простой вопрос..."
+            q = random.choice(questions_db)
+            text = q.text
         elif q == QuestionType.HARD:
             text = "Задаю сложный вопрос..."
-
+        elif q == QuestionType.ATTENTION:
+            text = "Задаю вопрос на внимательность..."
         return self.make_response(text)
 
     def handle_local_intents(request: Request):
-        pass
+        return AnswerScene()
 
     def handle_global_intents(self):
         pass
+
+
+class AnswerScene(Scene):
+    def reply(self, request: Request):
+        ...  # TODO
 
 
 def _list_scenes():
