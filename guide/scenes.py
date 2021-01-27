@@ -108,6 +108,7 @@ class SimpleQuestion(GlobalScene):
 class HowIs(GlobalScene):
     def reply(self, request: Request):
         text = "Вы хотите узнать кто такой ..."
+        # TODO:
         return self.make_response(text)
 
 
