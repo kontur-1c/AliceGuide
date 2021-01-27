@@ -6,6 +6,7 @@ from guide.alice import Request
 from guide.responce_helpers import button
 from guide.scenes_util import Scene
 from guide import intents
+from guide.state import STATE_RESPONSE_KEY
 
 
 class QuestionType(enum.Enum):
@@ -72,7 +73,7 @@ class StartGame(Scene):
         )
         return self.make_response(
             text,
-            state={"screen": "start_tour"},
+            state={"question_type": self.question_type.name},
             buttons=[
                 button("Простой"),
                 button("Сложный"),
@@ -83,20 +84,23 @@ class StartGame(Scene):
     def handle_local_intents(self, request: Request):
         if intents.GAME_QUESTION:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
-            if question_type == QuestionType.SIMPLE:
-                return SimpleQuestion()
-            elif question_type == QuestionType.HARD:
-                ...
-            elif question_type == QuestionType.ATTENTION:
-                ...
+            self.question_type = question_type
+            return Question()
 
     def handle_global_intents(self):
         pass
 
 
-class SimpleQuestion(Scene):
+class Question(Scene):
     def reply(self, request: Request):
-        text = "Задаю простой вопрос..."  # TODO "Обработка вопросов"
+        s = request["state"][STATE_RESPONSE_KEY]["question_type"]
+        q = QuestionType[s]
+        text = ""
+        if q == QuestionType.SIMPLE:
+            text = "Задаю простой вопрос..."
+        elif q == QuestionType.HARD:
+            text = "Задаю сложный вопрос..."
+
         return self.make_response(text)
 
     def handle_local_intents(request: Request):

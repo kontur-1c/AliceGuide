@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from guide.alice import Request
+from guide.state import STATE_RESPONSE_KEY
 
 
 class Scene(ABC):
@@ -59,6 +60,3 @@ class Scene(ABC):
         if state is not None:
             webhook_response[STATE_RESPONSE_KEY].update(state)
         return webhook_response
-
-
-STATE_RESPONSE_KEY = "session_state"
