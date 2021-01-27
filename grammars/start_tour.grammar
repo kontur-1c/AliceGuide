@@ -1,0 +1,13 @@
+root:
+    $Start $Tour
+
+$Start:
+    %lemma
+    запусти
+    начни
+    давай
+    расскажи
+
+$Tour:
+    %lemma
+    экскурсия

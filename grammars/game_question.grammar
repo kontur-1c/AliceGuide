@@ -1,0 +1,6 @@
+root:
+    $QuestionType
+slots:
+    question_type:
+        source: $QuestionType
+        type: QuestionType

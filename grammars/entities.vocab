@@ -1,0 +1,9 @@
+entity QuestionType:
+    lemma: true
+    values:
+        simple:
+            Простой
+        hard:
+            Сложный
+        attention:
+            На внимательность
