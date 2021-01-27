@@ -92,7 +92,6 @@ class StartGame(Scene):
 
 @dataclass
 class QuestionRecord:
-    id: int
     questiontype: QuestionType
     text: str
     # answer_type: ...
@@ -102,20 +101,16 @@ class QuestionRecord:
 
 questions_db = {
     1: QuestionRecord(
-        1,
         QuestionType.SIMPLE,
         "Задаю простой вопрос. Какова общая высота памятника?",
         15,
     ),
     2: QuestionRecord(
-        2,
         QuestionType.SIMPLE,
         "Задаю сложный вопрос. Сколько поэтов, стихотворения которых изучают в школе, изображны на памятнике?",
         6,
     ),
-    3: QuestionRecord(
-        3,
-    ),
+    3: QuestionRecord(QuestionType.SIMPLE, "В чем смысл жизни", 42),
 }
 
 
@@ -124,7 +119,7 @@ class QuestionScene(Scene):
         q = QuestionType.from_request(request, intents.GAME_QUESTION)
         text = ""
         if q == QuestionType.SIMPLE:
-            q_id = random.choice(questions_db.keys)
+            q_id = random.choice(list(questions_db.keys()))
             q = questions_db[q_id]
             text = q.text
         elif q == QuestionType.HARD:
