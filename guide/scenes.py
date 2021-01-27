@@ -140,9 +140,9 @@ class AnswerScene(Scene):
         q_id = request.request_body["state"][STATE_REQUEST_KEY]["question_id"]
         q = questions_db[q_id]
         if request.request_body["request"]["original_utterance"] == q.answer:
-            self.make_response("Верно")
+            return self.make_response("Верно")
         else:
-            self.make_response("Не верно")
+            return self.make_response("Не верно")
 
     def handle_local_intents(self, request: Request):
         return QuestionScene()
