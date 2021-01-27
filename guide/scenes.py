@@ -128,7 +128,7 @@ class QuestionScene(Scene):
             text = "Задаю вопрос на внимательность..."
         return self.make_response(text, state={"question_id": q_id})
 
-    def handle_local_intents(request: Request):
+    def handle_local_intents(self, request: Request):
         return AnswerScene()
 
     def handle_global_intents(self):
@@ -144,7 +144,7 @@ class AnswerScene(Scene):
         else:
             self.make_response("Не верно")
 
-    def handle_local_intents(request: Request):
+    def handle_local_intents(self, request: Request):
         return QuestionScene()
 
     def handle_global_intents(self):
