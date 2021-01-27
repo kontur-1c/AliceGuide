@@ -27,7 +27,18 @@ class QuestionType(enum.Enum):
             return cls.UNKNOWN
 
 
-class Welcome(Scene):
+class GlobalScene(Scene):
+    def reply(self, request: Request):
+        pass
+
+    def handle_global_intents(self, request):
+        return HowIs()
+
+    def handle_local_intents(self, request: Request):
+        pass
+
+
+class Welcome(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Я могу провести экскурсию по памятнику "
@@ -48,23 +59,17 @@ class Welcome(Scene):
         elif intents.START_GAME in request.intents:
             return StartGame()
 
-    def handle_global_intents(self, request):
-        pass
 
-
-class StartTour(Scene):
+class StartTour(GlobalScene):
     def reply(self, request: Request):
         text = "Наша экскурсия начинается с ..."  # TODO сценарий "Экскурсия"
         return self.make_response(text)
 
-    def handle_local_intents(request: Request):
-        pass
-
-    def handle_global_intents(self):
+    def handle_local_intents(self, request: Request):
         pass
 
 
-class StartGame(Scene):
+class StartGame(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Вопросы бывают простые, сложные и на внимательность. "
@@ -90,20 +95,20 @@ class StartGame(Scene):
             elif question_type == QuestionType.ATTENTION:
                 ...
 
-    def handle_global_intents(self):
-        pass
 
-
-class SimpleQuestion(Scene):
+class SimpleQuestion(GlobalScene):
     def reply(self, request: Request):
         text = "Задаю простой вопрос..."  # TODO "Обработка вопросов"
         return self.make_response(text)
 
-    def handle_local_intents(request: Request):
+    def handle_local_intents(self, request: Request):
         pass
 
-    def handle_global_intents(self):
-        pass
+
+class HowIs(GlobalScene):
+    def reply(self, request: Request):
+        text = "Вы хотите узнать кто такой ..."
+        return self.make_response(text)
 
 
 def _list_scenes():
