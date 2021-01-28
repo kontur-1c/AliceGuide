@@ -139,12 +139,27 @@ class AnswerScene(Scene):
     def reply(self, request: Request):
         q_id = request.request_body["state"][STATE_REQUEST_KEY]["question_id"]
         q = questions_db[q_id]
-        if request.request_body["request"]["original_utterance"] == q.answer:
-            return self.make_response("Верно")
+        ee = request.request_body["request"]["nlu"]["entities"]
+        number = [e for e in ee if e["type"] == "YANDEX.NUMBER"][0]
+        if number["value"] == q.answer:
+            text = "Верно!"
         else:
-            return self.make_response("Не верно")
+            text = "Не верно!"
+        text += f" . Задать еще {q.questiontype.name} вопрос?"
+        return self.make_response(text, buttons=[button("Да"), button("Нет")])
 
     def handle_local_intents(self, request: Request):
+        # TODO обработка да и нет
+        #     "intents": {
+        #     "YANDEX.CONFIRM": {
+        #       "slots": {}
+        #     }
+        #   }
+        #  "intents": {
+        #     "YANDEX.REJECT": {
+        #       "slots": {}
+        #     }
+        #   }
         return QuestionScene()
 
     def handle_global_intents(self):
