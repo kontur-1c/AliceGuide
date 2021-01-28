@@ -121,8 +121,9 @@ class HowIs_start(GlobalScene):
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
         data = self.__get_info(persona)
         text = data["short"]
+        card = image_gallery(image_ids=data["gallery"].split(sep='|'))
 
-        return self.make_response(text, card=data["gallery"].split(sep='|'))
+        return self.make_response(text, card=card)
 
 
 def _list_scenes():
