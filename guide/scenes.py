@@ -1,7 +1,7 @@
 import inspect
 import sys
 import enum
-import pandas as pd
+import csv
 
 from guide.alice import Request
 from guide.responce_helpers import (button, image_gallery)
@@ -34,7 +34,7 @@ class GlobalScene(Scene):
 
     def handle_global_intents(self, request):
         if intents.TELL_ABOUT in request.intents:
-            return HowIs()
+            return HowIs_start()
 
     def handle_local_intents(self, request: Request):
         pass
@@ -108,15 +108,21 @@ class SimpleQuestion(GlobalScene):
 
 
 class HowIs_start(GlobalScene):
+
+    def __get_info(self, id: str):
+        with open('guide/persons.csv', mode='r', encoding='utf-8') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            for row in reader:
+                if row["id"] == id:
+                    return row
+
     def reply(self, request: Request):
 
-        df = pd.read_csv('pesons.csv', sep=';')
-        id = request.intents[intents.TELL_ABOUT]["slots"]["question_type"]["value"]
+        persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
+        data = self.__get_info(persona)
+        text = data["short"]
 
-        data = df[df.source == id]
-        text = data.short
-
-        return self.make_response(text, card=data.gallery.split(sep='|'))
+        return self.make_response(text, card=data["gallery"].split(sep='|'))
 
 
 def _list_scenes():
