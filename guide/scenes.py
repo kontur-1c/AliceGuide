@@ -133,7 +133,7 @@ class HowIs_end(GlobalScene):
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
-            return eval(request[STATE_RESPONSE_KEY].scene)
+            return eval(request["state"][STATE_REQUEST_KEY]["scene"])
         elif intents.REJECT in request.intents:
             return Welcome()
 
