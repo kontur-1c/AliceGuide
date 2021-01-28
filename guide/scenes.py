@@ -89,7 +89,7 @@ class StartGame(GlobalScene):
         )
 
     def handle_local_intents(self, request: Request):
-        if intents.GAME_QUESTION:
+        if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
             if question_type == QuestionType.SIMPLE:
                 return SimpleQuestion()

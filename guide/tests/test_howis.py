@@ -78,11 +78,12 @@ REQUEST = {
       },
     "state": {
         "session": {
-          "scene": "Welcome"
+          "scene": "StartGame",
+          "screen": "start_tour"
         },
         "user": {},
         "application": {}
-      },
+    },
     "version": "1.0"
 }
 
