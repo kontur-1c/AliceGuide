@@ -126,10 +126,7 @@ class HowIs_start(GlobalScene):
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep='|'))
 
-        return self.make_response(text, card=card, state={"scene": "HowIs_end", "previous": previous})
-
-
-class HowIs_end(GlobalScene):
+        return self.make_response(text, card=card, state={"scene": "HowIs_start", "previous": previous})
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
