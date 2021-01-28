@@ -7,6 +7,7 @@ from guide.alice import Request
 from guide.responce_helpers import (button, image_gallery)
 from guide.scenes_util import Scene
 from guide import intents
+from guide.state import STATE_REQUEST_KEY
 
 
 class QuestionType(enum.Enum):
@@ -109,7 +110,8 @@ class SimpleQuestion(GlobalScene):
 
 class HowIs_start(GlobalScene):
 
-    def __get_info(self, id: str):
+    @staticmethod
+    def __get_info(id: str):
         with open('guide/persons.csv', mode='r', encoding='utf-8') as infile:
             reader = csv.DictReader(infile, delimiter=';')
             for row in reader:
@@ -119,11 +121,21 @@ class HowIs_start(GlobalScene):
     def reply(self, request: Request):
 
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
+        previous = request["state"][STATE_REQUEST_KEY].get("scene", "")
         data = self.__get_info(persona)
-        text = data["short"]
+        text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep='|'))
 
-        return self.make_response(text, card=card)
+        return self.make_response(text, card=card, state={"scene": "HowIs_end", "previous": previous})
+
+
+class HowIs_end(GlobalScene):
+
+    def handle_local_intents(self, request: Request):
+        if intents.CONFIRM in request.intents:
+            return eval(request[STATE_RESPONSE_KEY].scene)
+        elif intents.REJECT in request.intents:
+            return Welcome()
 
 
 def _list_scenes():
