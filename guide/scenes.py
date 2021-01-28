@@ -1,9 +1,10 @@
 import inspect
 import sys
 import enum
+import pandas as pd
 
 from guide.alice import Request
-from guide.responce_helpers import button
+from guide.responce_helpers import (button, image_gallery)
 from guide.scenes_util import Scene
 from guide import intents
 
@@ -32,7 +33,8 @@ class GlobalScene(Scene):
         pass
 
     def handle_global_intents(self, request):
-        return HowIs()
+        if intents.TELL_ABOUT in request.intents:
+            return HowIs()
 
     def handle_local_intents(self, request: Request):
         pass
@@ -105,11 +107,16 @@ class SimpleQuestion(GlobalScene):
         pass
 
 
-class HowIs(GlobalScene):
+class HowIs_start(GlobalScene):
     def reply(self, request: Request):
-        text = "Вы хотите узнать кто такой ..."
-        # TODO:
-        return self.make_response(text)
+
+        df = pd.read_csv('pesons.csv', sep=';')
+        id = request.intents[intents.TELL_ABOUT]["slots"]["question_type"]["value"]
+
+        data = df[df.source == id]
+        text = data.short
+
+        return self.make_response(text, card=data.gallery.split(sep='|'))
 
 
 def _list_scenes():
