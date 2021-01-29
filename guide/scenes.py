@@ -179,8 +179,8 @@ class AnswerScene(GlobalScene):
 class WhoIs(GlobalScene):
     @staticmethod
     def __get_info(id: str):
-        with open("guide/persons.csv", mode="r", encoding="utf-8") as infile:
-            reader = csv.DictReader(infile, delimiter=";")
+        with open("guide/persons.csv", mode="r", encoding="utf-8") as in_file:
+            reader = csv.DictReader(in_file, delimiter=";")
             for row in reader:
                 if row["id"] == id:
                     return row
