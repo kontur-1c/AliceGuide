@@ -64,10 +64,9 @@ class GlobalScene(Scene):
     def fallback(self, request: Request):
         save_state = {}
         # Сохраним важные состояние
-        if "previous" in request.state_session:
-            save_state.update({"previous": request.state_session["previous"]})
-        if "question_type" in request.state_session:
-            save_state.update({"question_type": request.state_session["question_type"]})
+        for save in state.MUST_BE_SAVE:
+            if save in request.state_session:
+                save_state.update({save: request.state_session[save]})
         return self.make_response(
             "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос.",
             state=save_state,
@@ -238,11 +237,13 @@ class WhoIs(GlobalScene):
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
-        return self.make_response(text, card=card, state={"previous": previous})
+        return self.make_response(
+            text, card=card, state={state.PREVIOUS_SCENE: previous}
+        )
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
-            return eval(request.state_session["previous"] + "()")
+            return eval(request.state_session[state.PREVIOUS_SCENE] + "()")
         elif intents.REJECT in request.intents:
             return Welcome()
 

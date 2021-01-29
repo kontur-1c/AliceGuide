@@ -2,3 +2,6 @@ STATE_REQUEST_KEY = "session"
 STATE_RESPONSE_KEY = "session_state"
 
 QUESTION_TYPE = "question_type"
+PREVIOUS_SCENE = "previous"
+
+MUST_BE_SAVE = [QUESTION_TYPE, PREVIOUS_SCENE]
