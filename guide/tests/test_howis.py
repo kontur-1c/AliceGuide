@@ -133,7 +133,7 @@ REQUEST_RETURN = {
   },
   "state": {
     "session": {
-      "scene": "HowIs_end",
+      "scene": "WhoIs",
       "previous": "StartGame"
     },
     "user": {},

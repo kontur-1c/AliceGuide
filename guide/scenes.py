@@ -35,7 +35,7 @@ class GlobalScene(Scene):
 
     def handle_global_intents(self, request):
         if intents.TELL_ABOUT in request.intents:
-            return HowIs_start()
+            return WhoIs()
 
     def handle_local_intents(self, request: Request):
         pass
@@ -108,7 +108,7 @@ class SimpleQuestion(GlobalScene):
         pass
 
 
-class HowIs_start(GlobalScene):
+class WhoIs(GlobalScene):
 
     @staticmethod
     def __get_info(id: str):
@@ -126,11 +126,11 @@ class HowIs_start(GlobalScene):
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep='|'))
 
-        return self.make_response(text, card=card, state={"scene": "HowIs_start", "previous": previous})
+        return self.make_response(text, card=card, state={"previous": previous})
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
-            return eval(request["state"][STATE_REQUEST_KEY]["scene"])
+            return eval(request.state[STATE_REQUEST_KEY]["previous"]+"()")
         elif intents.REJECT in request.intents:
             return Welcome()
 
