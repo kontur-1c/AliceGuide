@@ -3,7 +3,6 @@ import enum
 import inspect
 import random
 import sys
-from dataclasses import dataclass
 
 from guide import intents
 from guide.alice import Request
@@ -13,22 +12,30 @@ from guide.state import STATE_REQUEST_KEY
 
 
 class QuestionType(enum.Enum):
-    UNKNOWN = 1
-    SIMPLE = 2
-    HARD = 3
-    ATTENTION = 4
+    unknown = 1
+    simple = 2
+    hard = 3
+    attention = 4
 
     @classmethod
     def from_request(cls, request: Request, intent_name: str):
         slot = request.intents[intent_name]["slots"]["question_type"]["value"]
         if slot == "simple":
-            return cls.SIMPLE
+            return cls.simple
         elif slot == "hard":
-            return cls.HARD
+            return cls.hard
         elif slot == "attention":
-            return cls.ATTENTION
+            return cls.attention
         else:
-            return cls.UNKNOWN
+            return cls.unknown
+
+    def russian(self):
+        return {
+            self.simple: "простой",
+            self.hard: "сложный",
+            self.attention: "на внимательность",
+            self.unknown: "неизвестный",
+        }[self]
 
 
 class GlobalScene(Scene):
@@ -92,88 +99,96 @@ class StartGame(GlobalScene):
     def handle_local_intents(self, request: Request):
         if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
-            if question_type == QuestionType.SIMPLE:
+            if question_type != QuestionType.unknown:
                 return QuestionScene()
-            elif question_type == QuestionType.HARD:
-                ...
-            elif question_type == QuestionType.ATTENTION:
-                ...
-
-
-@dataclass
-class QuestionRecord:
-    questiontype: QuestionType
-    text: str
-    # answer_type: ...
-    answer: int
-    # buttons: Optional[str]
-
-
-questions_db = {
-    1: QuestionRecord(
-        QuestionType.SIMPLE,
-        "Задаю простой вопрос. Какова общая высота памятника?",
-        15,
-    ),
-    2: QuestionRecord(
-        QuestionType.SIMPLE,
-        (
-            "Задаю сложный вопрос. Сколько поэтов,"
-            "стихотворения которых изучают в школе, изображны на памятнике?"
-        ),
-        6,
-    ),
-    3: QuestionRecord(QuestionType.SIMPLE, "В чем смысл жизни", 42),
-}
 
 
 class QuestionScene(GlobalScene):
+    @staticmethod
+    def get_questions(type: QuestionType):
+        with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
+            reader = csv.DictReader(in_file, delimiter=",")
+            return [r for r in reader if r["type"] == type.name]
+
     def reply(self, request: Request):
-        q = QuestionType.from_request(request, intents.GAME_QUESTION)
-        text = ""
-        if q == QuestionType.SIMPLE:
-            q_id = random.choice(list(questions_db.keys()))
-            q = questions_db[q_id]
-            text = q.text
-        elif q == QuestionType.HARD:
-            text = "Задаю сложный вопрос..."
-        elif q == QuestionType.ATTENTION:
-            text = "Задаю вопрос на внимательность..."
-        return self.make_response(text, state={"question_id": q_id})
+        if intents.GAME_QUESTION in request.intents:
+            question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
+        else:
+            # TODO продумать логику выборка категории
+            # - если пришли из ответа, то нужно использовать тот же тип вопроса
+            # - если пришли из начала викторины, то либо распознали интент
+            #   либо нужно переспросить / выбрать за пользователя
+            question_type = QuestionType.simple
+        questions = self.get_questions(question_type)
+        if questions:
+            # TODO сделать сохранение вопросов, на которые пользователь уже отвечал,
+            # выбирать только из неотвеченных
+            question = random.choice(questions)
+            question_id = question["id"]
+            question_text = question["text"]
+            self._next_scene = AnswerScene()
+            return self.make_response(
+                f"Задаю {question_type.russian()} вопрос. {question_text}",
+                state={"question_id": question_id},
+                buttons=[button(question["answer"])],
+            )
+        else:
+            # TODO сделать более плавный UX
+            # например предложить пользователю категорию,
+            # в которой еще остались вопросы
+            text = (
+                "Вы ответили на все вопросы этой категории!"
+                "Я могу провести экскурсию по памятнику "
+                "могу рассказать, про каждую фигуру на памятнике "
+                "а можем сыграть в викторину"
+            )
+            return self.make_response(
+                text,
+                buttons=[
+                    button("Сыграть в викторину"),
+                    button("Расскажи экскурсию"),
+                ],
+            )
 
     def handle_local_intents(self, request: Request):
-        return AnswerScene()
-
-    def handle_global_intents(self):
-        pass
+        if intents.START_TOUR in request.intents:
+            return StartTour()
+        elif intents.START_GAME in request.intents:
+            return StartGame()
+        else:
+            return AnswerScene()
 
 
 class AnswerScene(GlobalScene):
+    @staticmethod
+    def get_question(id: int):
+        with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
+            reader = csv.DictReader(in_file, delimiter=",")
+            return [r for r in reader if r["id"] == id][0]
+
     def reply(self, request: Request):
-        q_id = request.request_body["state"][STATE_REQUEST_KEY]["question_id"]
-        q = questions_db[q_id]
-        ee = request.request_body["request"]["nlu"]["entities"]
-        number = [e for e in ee if e["type"] == "YANDEX.NUMBER"][0]
-        if number["value"] == q.answer:
-            text = "Верно!"
-        else:
-            text = "Не верно!"
-        text += f" . Задать еще {q.questiontype.name} вопрос?"
-        return self.make_response(text, buttons=[button("Да"), button("Нет")])
+        question_id = request.request_body["state"][STATE_REQUEST_KEY]["question_id"]
+        question = self.get_question(question_id)
+        # TODO поддержать нечисловые типы ответов для вопросов
+        # TODO поддержать частично правильный ответ
+        correct_answer = int(question["answer"])
+        nlu_entities = request.request_body["request"]["nlu"]["entities"]
+        nlu_numbers = [e["value"] for e in nlu_entities if e["type"] == "YANDEX.NUMBER"]
+        answered_correctly = correct_answer in nlu_numbers
+        print(correct_answer, type(correct_answer))
+        print(nlu_numbers)
+        text = question["reply_true"] if answered_correctly else question["reply_false"]
+        return self.make_response(
+            f"{text} Задать еще вопрос?", buttons=[button("Да"), button("Нет")]
+        )
 
     def handle_local_intents(self, request: Request):
-        # TODO обработка да и нет
-        #     "intents": {
-        #     "YANDEX.CONFIRM": {
-        #       "slots": {}
-        #     }
-        #   }
-        #  "intents": {
-        #     "YANDEX.REJECT": {
-        #       "slots": {}
-        #     }
-        #   }
-        return QuestionScene()
+        if intents.CONFIRM in request.intents:
+            return QuestionScene()
+        elif intents.GAME_QUESTION in request.intents:
+            return QuestionScene()
+        elif intents.REJECT in request.intents:
+            return Welcome()
 
 
 class WhoIs(GlobalScene):
