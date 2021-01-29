@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from guide.alice import Request
-from guide.state import STATE_RESPONSE_KEY
+from guide.state import STATE_RESPONSE_KEY, PERMANENT_VALUES
 
 
 class Scene(ABC):
@@ -38,7 +38,14 @@ class Scene(ABC):
         )
 
     def make_response(
-        self, text, tts=None, card=None, state=None, buttons=None, directives=None
+        self,
+        request: Request,
+        text,
+        tts=None,
+        card=None,
+        state=None,
+        buttons=None,
+        directives=None,
     ):
         response = {
             "text": text,
@@ -57,6 +64,9 @@ class Scene(ABC):
                 "scene": self.id(),
             },
         }
+        for key, value in request.state_session.items():
+            if key in PERMANENT_VALUES:
+                webhook_response[STATE_RESPONSE_KEY][key] = value
         if state is not None:
             webhook_response[STATE_RESPONSE_KEY].update(state)
         return webhook_response

@@ -4,8 +4,7 @@ import inspect
 import random
 import sys
 
-from guide import intents
-from guide import state
+from guide import intents, state
 from guide.alice import Request
 from guide.responce_helpers import button, image_gallery
 from guide.scenes_util import Scene
@@ -70,6 +69,7 @@ class Welcome(GlobalScene):
             "а можем сыграть в викторину"
         )
         return self.make_response(
+            request,
             text,
             buttons=[
                 button("Сыграть в викторину"),
@@ -87,7 +87,7 @@ class Welcome(GlobalScene):
 class StartTour(GlobalScene):
     def reply(self, request: Request):
         text = "Наша экскурсия начинается с ..."  # TODO сценарий "Экскурсия"
-        return self.make_response(text)
+        return self.make_response(request, text)
 
     def handle_local_intents(self, request: Request):
         pass
@@ -104,6 +104,7 @@ class StartGame(GlobalScene):
             "Начнем с простого вопроса?"
         )
         return self.make_response(
+            request,
             text,
             buttons=[
                 button("Простой"),
@@ -138,16 +139,20 @@ class QuestionScene(GlobalScene):
         else:
             question_type = QuestionType.simple
         questions = self.get_questions(question_type)
-        if questions:
-            # TODO сделать сохранение вопросов, на которые пользователь уже отвечал,
-            # выбирать только из неотвеченных
-            question = random.choice(questions)
+        asked = set(request.state_session.get(state.ASKED_QUESTIONS, []))
+        not_asked = [q for q in questions if q["id"] not in asked]
+        if not_asked:
+            question = random.choice(not_asked)
             question_id = question["id"]
             question_text = question["text"]
             self._next_scene = AnswerScene()
             return self.make_response(
+                request,
                 f"Задаю {question_type.russian()} вопрос. {question_text}",
-                state={"question_id": question_id},
+                state={
+                    "question_id": question_id,
+                    state.ASKED_QUESTIONS: list(asked) + [question_id],
+                },
                 buttons=[button(question["answer"])],
             )
         else:
@@ -161,6 +166,7 @@ class QuestionScene(GlobalScene):
                 "а можем сыграть в викторину"
             )
             return self.make_response(
+                request,
                 text,
                 buttons=[
                     button("Сыграть в викторину"),
@@ -200,6 +206,7 @@ class AnswerScene(GlobalScene):
             "attention": "Задать еще вопрос на внимательность?",
         }[question["type"]]
         return self.make_response(
+            request,
             f"{text} {next_question_prompt}",
             buttons=[button("Да"), button("Нет")],
             state={state.QUESTION_TYPE: question["type"]},
@@ -222,14 +229,15 @@ class WhoIs(GlobalScene):
             return [r for r in reader if r["id"] == id][0]
 
     def reply(self, request: Request):
-
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
         previous = request.state_session.get("scene", "")
         data = self.__get_info(persona)
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
-        return self.make_response(text, card=card, state={"previous": previous})
+        return self.make_response(
+            request, text, card=card, state={"previous": previous}
+        )
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
