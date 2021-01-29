@@ -49,6 +49,18 @@ class GlobalScene(Scene):
     def handle_local_intents(self, request: Request):
         pass
 
+    def fallback(self, request: Request):
+        state = {}
+        # Сохраним важные состояние
+        if "previous" in request.state["session"]:
+            state.update({"previous": request.state["session"]["previous"]})
+        if "question_type" in request.state["session"]:
+            state.update({"question_type": request.state["session"]["question_type"]})
+        return self.make_response(
+            "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос.",
+            state=state,
+        )
+
 
 class Welcome(GlobalScene):
     def reply(self, request: Request):

@@ -32,10 +32,9 @@ class Scene(ABC):
     def handle_local_intents(request: Request) -> Optional[str]:
         raise NotImplementedError()
 
+    @abstractmethod
     def fallback(self, request: Request):
-        return self.make_response(
-            "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос."
-        )
+        raise NotImplementedError()
 
     def make_response(
         self, text, tts=None, card=None, state=None, buttons=None, directives=None
