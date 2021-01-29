@@ -1,0 +1,7 @@
+root:
+    расскажи про $Persons
+    а кто такой $Persons
+slots:
+    who:
+        source: $Persons
+        type: Persons

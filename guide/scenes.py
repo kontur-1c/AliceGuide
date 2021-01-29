@@ -1,11 +1,13 @@
 import inspect
 import sys
 import enum
+import csv
 
 from guide.alice import Request
-from guide.responce_helpers import button
+from guide.responce_helpers import (button, image_gallery)
 from guide.scenes_util import Scene
 from guide import intents
+from guide.state import STATE_REQUEST_KEY
 
 
 class QuestionType(enum.Enum):
@@ -27,7 +29,19 @@ class QuestionType(enum.Enum):
             return cls.UNKNOWN
 
 
-class Welcome(Scene):
+class GlobalScene(Scene):
+    def reply(self, request: Request):
+        pass
+
+    def handle_global_intents(self, request):
+        if intents.TELL_ABOUT in request.intents:
+            return WhoIs()
+
+    def handle_local_intents(self, request: Request):
+        pass
+
+
+class Welcome(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Я могу провести экскурсию по памятнику "
@@ -48,23 +62,17 @@ class Welcome(Scene):
         elif intents.START_GAME in request.intents:
             return StartGame()
 
-    def handle_global_intents(self, request):
-        pass
 
-
-class StartTour(Scene):
+class StartTour(GlobalScene):
     def reply(self, request: Request):
         text = "Наша экскурсия начинается с ..."  # TODO сценарий "Экскурсия"
         return self.make_response(text)
 
-    def handle_local_intents(request: Request):
-        pass
-
-    def handle_global_intents(self):
+    def handle_local_intents(self, request: Request):
         pass
 
 
-class StartGame(Scene):
+class StartGame(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Вопросы бывают простые, сложные и на внимательность. "
@@ -81,7 +89,7 @@ class StartGame(Scene):
         )
 
     def handle_local_intents(self, request: Request):
-        if intents.GAME_QUESTION:
+        if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
             if question_type == QuestionType.SIMPLE:
                 return SimpleQuestion()
@@ -90,20 +98,41 @@ class StartGame(Scene):
             elif question_type == QuestionType.ATTENTION:
                 ...
 
-    def handle_global_intents(self):
-        pass
 
-
-class SimpleQuestion(Scene):
+class SimpleQuestion(GlobalScene):
     def reply(self, request: Request):
         text = "Задаю простой вопрос..."  # TODO "Обработка вопросов"
         return self.make_response(text)
 
-    def handle_local_intents(request: Request):
+    def handle_local_intents(self, request: Request):
         pass
 
-    def handle_global_intents(self):
-        pass
+
+class WhoIs(GlobalScene):
+
+    @staticmethod
+    def __get_info(id: str):
+        with open('guide/persons.csv', mode='r', encoding='utf-8') as infile:
+            reader = csv.DictReader(infile, delimiter=';')
+            for row in reader:
+                if row["id"] == id:
+                    return row
+
+    def reply(self, request: Request):
+
+        persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
+        previous = request.state[STATE_REQUEST_KEY].get("scene", "")
+        data = self.__get_info(persona)
+        text = data["short"] + "\nПродолжим?"
+        card = image_gallery(image_ids=data["gallery"].split(sep='|'))
+
+        return self.make_response(text, card=card, state={"previous": previous})
+
+    def handle_local_intents(self, request: Request):
+        if intents.CONFIRM in request.intents:
+            return eval(request.state[STATE_REQUEST_KEY]["previous"]+"()")
+        elif intents.REJECT in request.intents:
+            return Welcome()
 
 
 def _list_scenes():

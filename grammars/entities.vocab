@@ -7,3 +7,9 @@ entity QuestionType:
             Сложный
         attention:
             На внимательность
+entity Persons:
+    lemma: true
+    values:
+        KnazVladimir:
+            князь владимир
+            владимир? красно солнышко
