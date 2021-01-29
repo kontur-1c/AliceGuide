@@ -1,4 +1,4 @@
-name: Push and Deploy Serverless function
+name: Deploy to production
 on: 
   push:
     branches: [main]

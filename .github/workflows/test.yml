@@ -1,4 +1,4 @@
-name: Alice skill
+name: Test Alice skill
 
 on:
   push:

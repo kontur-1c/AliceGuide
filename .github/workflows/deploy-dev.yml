@@ -1,4 +1,4 @@
-name: Alice skill
+name: Deploy to development
 
 on:
   push:
