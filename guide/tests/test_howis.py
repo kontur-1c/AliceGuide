@@ -3,12 +3,6 @@ from guide.main import handler
 true = True
 false = False
 
-response = {
-    "response": {"text": "Задаю простой вопрос...", "tts": "Задаю простой вопрос..."},
-    "version": "1.0",
-    "session_state": {"scene": "SimpleQuestion"},
-}
-
 REQUEST = {
     "meta": {
         "locale": "ru-RU",
@@ -145,9 +139,10 @@ REQUEST_RETURN = {
 
 def test_howis():
     response = handler(REQUEST, None)
-    assert response  # TODO
+    assert response["session_state"]["scene"] == "WhoIs"
+    assert response["session_state"]["previous"] == "StartGame"
 
 
 def test_howis_end():
     response = handler(REQUEST_RETURN, None)
-    assert response  # TODO
+    assert response["session_state"]["scene"] == "StartGame"

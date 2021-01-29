@@ -121,7 +121,7 @@ class WhoIs(GlobalScene):
     def reply(self, request: Request):
 
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
-        previous = request["state"][STATE_REQUEST_KEY].get("scene", "")
+        previous = request.state[STATE_REQUEST_KEY].get("scene", "")
         data = self.__get_info(persona)
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep='|'))
