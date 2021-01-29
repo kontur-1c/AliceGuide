@@ -29,6 +29,18 @@ class QuestionType(enum.Enum):
         else:
             return cls.unknown
 
+    @classmethod
+    def from_state(cls, request: Request, intent_name: str):
+        slot = request.state["session"]["question_type"]
+        if slot == "simple":
+            return cls.simple
+        elif slot == "hard":
+            return cls.hard
+        elif slot == "attention":
+            return cls.attention
+        else:
+            return cls.unknown
+
     def russian(self):
         return {
             self.simple: "простой",
@@ -113,6 +125,8 @@ class QuestionScene(GlobalScene):
     def reply(self, request: Request):
         if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
+        elif intents.GAME_QUESTION in request.state["session"]:
+            question_type = QuestionType.from_state(request, intents.GAME_QUESTION)
         else:
             # TODO продумать логику выборка категории
             # - если пришли из ответа, то нужно использовать тот же тип вопроса
@@ -179,7 +193,9 @@ class AnswerScene(GlobalScene):
         print(nlu_numbers)
         text = question["reply_true"] if answered_correctly else question["reply_false"]
         return self.make_response(
-            f"{text} Задать еще вопрос?", buttons=[button("Да"), button("Нет")]
+            f"{text} Задать еще вопрос?",
+            buttons=[button("Да"), button("Нет")],
+            state={"question_type": question["type"]},
         )
 
     def handle_local_intents(self, request: Request):
@@ -195,7 +211,7 @@ class WhoIs(GlobalScene):
     @staticmethod
     def __get_info(id: str):
         with open("guide/persons.csv", mode="r", encoding="utf-8") as in_file:
-            reader = csv.DictReader(in_file, delimiter=";")
+            reader = csv.DictReader(in_file, delimiter=",")
             for row in reader:
                 if row["id"] == id:
                     return row
