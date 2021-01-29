@@ -99,7 +99,7 @@ class StartGame(GlobalScene):
             "Вопросы бывают простые, сложные и на внимательность.\n"
             "В простых вопросах будут варианты ответа.\n"
             "В сложных подсказок не будет.\n"
-            'А чтобы правильно ответить на вопрос "На внимательность" хорошо бы видеть сам памятник'
+            'А чтобы правильно ответить на вопрос "На внимательность" хорошо бы видеть сам памятник '
             "или его фотографии.\n"
             "Начнем с простого вопроса?"
         )
@@ -117,7 +117,7 @@ class StartGame(GlobalScene):
         question_type = QuestionType.unknown
         if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
-        elif intents.QUESTION_TYPE in request.state["session"]:
+        elif intents.CONFIRM in request.intents:
             question_type = QuestionType.from_state(request, intents.GAME_QUESTION)
         if question_type != QuestionType.unknown:
             return QuestionScene()
