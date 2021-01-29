@@ -2,6 +2,10 @@ GEOLOCATION_ALLOWED = "Geolocation.Allowed"
 GEOLOCATION_REJECTED = "Geolocation.Rejected"
 
 
+def big_image(image_id):
+    return {"type": "BigImage", "image_id": image_id}
+
+
 def image_gallery(image_ids):
     items = [{"image_id": image_id} for image_id in image_ids]
     return {
