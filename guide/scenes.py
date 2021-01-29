@@ -114,10 +114,13 @@ class StartGame(GlobalScene):
         )
 
     def handle_local_intents(self, request: Request):
+        question_type = QuestionType.unknown
         if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
-            if question_type != QuestionType.unknown:
-                return QuestionScene()
+        elif intents.QUESTION_TYPE in request.state["session"]:
+            question_type = QuestionType.from_state(request, intents.GAME_QUESTION)
+        if question_type != QuestionType.unknown:
+            return QuestionScene()
 
 
 class QuestionScene(GlobalScene):
@@ -130,7 +133,7 @@ class QuestionScene(GlobalScene):
     def reply(self, request: Request):
         if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
-        elif intents.GAME_QUESTION in request.state["session"]:
+        elif intents.QUESTION_TYPE in request.state["session"]:
             question_type = QuestionType.from_state(request, intents.GAME_QUESTION)
         else:
             # TODO продумать логику выборка категории

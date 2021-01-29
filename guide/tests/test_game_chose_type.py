@@ -101,6 +101,50 @@ REQUEST_ANSWER = {
     "version": "1.0",
 }
 
+REQUEST_ACCEPT = {
+    "meta": {
+        "locale": "ru-RU",
+        "timezone": "UTC",
+        "client_id": "ru.yandex.searchplugin/7.16 (none none; android 4.4.2)",
+        "interfaces": {
+            "screen": {},
+            "payments": {},
+            "account_linking": {},
+            "geolocation_sharing": {},
+        },
+    },
+    "session": {
+        "message_id": 2,
+        "session_id": "0585cf18-518f-45e8-b353-e621e9fa05d9",
+        "skill_id": "1f835d35-c640-4c36-b3bc-74ecaa0f71f1",
+        "user": {
+            "user_id": "5416FF55E3C40C32A49D45D68AA101F9AE1445387749DE5B7BEAAB9CD6557C1D"
+        },
+        "application": {
+            "application_id": "218AE790B7125C9F67E9E3234671E8861D9603BD2627726710B9EF8A1CE9748D"
+        },
+        "user_id": "218AE790B7125C9F67E9E3234671E8861D9603BD2627726710B9EF8A1CE9748D",
+        "new": false,
+    },
+    "request": {
+        "command": "хорошо",
+        "original_utterance": "Хорошо",
+        "nlu": {
+            "tokens": ["хорошо"],
+            "entities": [],
+            "intents": {"YANDEX.CONFIRM": {"slots": {}}},
+        },
+        "markup": {"dangerous_context": false},
+        "type": "SimpleUtterance",
+    },
+    "state": {
+        "session": {"scene": "StartGame", "question_type": "simple"},
+        "user": {},
+        "application": {},
+    },
+    "version": "1.0",
+}
+
 
 def test_play_game():
     response = handler(REQUEST, None)
@@ -115,3 +159,9 @@ def test_answer_question():
         response["session_state"]["question_type"] == "simple"
     )  # Сохранили тип вопроса
     assert "Верно" in response["response"]["text"]
+
+
+def test_accept():
+    response = handler(REQUEST_ACCEPT, None)
+    assert response
+    assert "Задаю простой вопрос" in response["response"]["text"]
