@@ -62,15 +62,15 @@ class GlobalScene(Scene):
         pass
 
     def fallback(self, request: Request):
-        state = {}
+        save_state = {}
         # Сохраним важные состояние
-        if "previous" in request.state["session"]:
-            state.update({"previous": request.state["session"]["previous"]})
-        if "question_type" in request.state["session"]:
-            state.update({"question_type": request.state["session"]["question_type"]})
+        if "previous" in request.state_session:
+            save_state.update({"previous": request.state_session["previous"]})
+        if "question_type" in request.state_session:
+            save_state.update({"question_type": request.state_session["question_type"]})
         return self.make_response(
             "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос.",
-            state=state,
+            state=save_state,
         )
 
 
