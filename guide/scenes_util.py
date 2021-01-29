@@ -34,7 +34,7 @@ class Scene(ABC):
 
     def fallback(self, request: Request):
         return self.make_response(
-            "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос."
+            "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать фразу."
         )
 
     def make_response(
