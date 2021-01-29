@@ -184,5 +184,9 @@ class Request:
         return self.request_body.get("request", {}).get("type")
 
     @property
-    def state(self):
-        return self.request_body.get("state", {})
+    def state_session(self):
+        return self.request_body.get("state", {}).get("session", {})
+
+    @property
+    def state_user(self):
+        return self.request_body.get("state", {}).get("user", {})
