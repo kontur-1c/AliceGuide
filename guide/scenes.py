@@ -1,13 +1,14 @@
-import inspect
-import sys
+import csv
 import enum
-from dataclasses import dataclass
+import inspect
 import random
+import sys
+from dataclasses import dataclass
 
-from guide.alice import Request
-from guide.responce_helpers import button
-from guide.scenes_util import Scene
 from guide import intents
+from guide.alice import Request
+from guide.responce_helpers import button, image_gallery
+from guide.scenes_util import Scene
 from guide.state import STATE_REQUEST_KEY
 
 
@@ -30,7 +31,19 @@ class QuestionType(enum.Enum):
             return cls.UNKNOWN
 
 
-class Welcome(Scene):
+class GlobalScene(Scene):
+    def reply(self, request: Request):
+        pass
+
+    def handle_global_intents(self, request):
+        if intents.TELL_ABOUT in request.intents:
+            return WhoIs()
+
+    def handle_local_intents(self, request: Request):
+        pass
+
+
+class Welcome(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Я могу провести экскурсию по памятнику "
@@ -51,23 +64,17 @@ class Welcome(Scene):
         elif intents.START_GAME in request.intents:
             return StartGame()
 
-    def handle_global_intents(self, request):
-        pass
 
-
-class StartTour(Scene):
+class StartTour(GlobalScene):
     def reply(self, request: Request):
         text = "Наша экскурсия начинается с ..."  # TODO сценарий "Экскурсия"
         return self.make_response(text)
 
-    def handle_local_intents(request: Request):
-        pass
-
-    def handle_global_intents(self):
+    def handle_local_intents(self, request: Request):
         pass
 
 
-class StartGame(Scene):
+class StartGame(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Вопросы бывают простые, сложные и на внимательность. "
@@ -83,11 +90,14 @@ class StartGame(Scene):
         )
 
     def handle_local_intents(self, request: Request):
-        if intents.GAME_QUESTION:
-            return QuestionScene()
-
-    def handle_global_intents(self):
-        pass
+        if intents.GAME_QUESTION in request.intents:
+            question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
+            if question_type == QuestionType.SIMPLE:
+                return QuestionScene()
+            elif question_type == QuestionType.HARD:
+                ...
+            elif question_type == QuestionType.ATTENTION:
+                ...
 
 
 @dataclass
@@ -107,14 +117,17 @@ questions_db = {
     ),
     2: QuestionRecord(
         QuestionType.SIMPLE,
-        "Задаю сложный вопрос. Сколько поэтов, стихотворения которых изучают в школе, изображны на памятнике?",
+        (
+            "Задаю сложный вопрос. Сколько поэтов,"
+            "стихотворения которых изучают в школе, изображны на памятнике?"
+        ),
         6,
     ),
     3: QuestionRecord(QuestionType.SIMPLE, "В чем смысл жизни", 42),
 }
 
 
-class QuestionScene(Scene):
+class QuestionScene(GlobalScene):
     def reply(self, request: Request):
         q = QuestionType.from_request(request, intents.GAME_QUESTION)
         text = ""
@@ -135,7 +148,7 @@ class QuestionScene(Scene):
         pass
 
 
-class AnswerScene(Scene):
+class AnswerScene(GlobalScene):
     def reply(self, request: Request):
         q_id = request.request_body["state"][STATE_REQUEST_KEY]["question_id"]
         q = questions_db[q_id]
@@ -162,8 +175,31 @@ class AnswerScene(Scene):
         #   }
         return QuestionScene()
 
-    def handle_global_intents(self):
-        pass
+
+class WhoIs(GlobalScene):
+    @staticmethod
+    def __get_info(id: str):
+        with open("guide/persons.csv", mode="r", encoding="utf-8") as infile:
+            reader = csv.DictReader(infile, delimiter=";")
+            for row in reader:
+                if row["id"] == id:
+                    return row
+
+    def reply(self, request: Request):
+
+        persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
+        previous = request.state[STATE_REQUEST_KEY].get("scene", "")
+        data = self.__get_info(persona)
+        text = data["short"] + "\nПродолжим?"
+        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
+
+        return self.make_response(text, card=card, state={"previous": previous})
+
+    def handle_local_intents(self, request: Request):
+        if intents.CONFIRM in request.intents:
+            return eval(request.state[STATE_REQUEST_KEY]["previous"] + "()")
+        elif intents.REJECT in request.intents:
+            return Welcome()
 
 
 def _list_scenes():

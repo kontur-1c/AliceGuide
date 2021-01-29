@@ -62,5 +62,5 @@ jobs:
           memory: '128'
           environment: DEBUG=True
           entrypoint: 'guide.main.handler'
-          source: '.'
+          source: './'
           exclude: './guide/tests'
