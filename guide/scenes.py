@@ -96,11 +96,11 @@ class StartTour(GlobalScene):
 class StartGame(GlobalScene):
     def reply(self, request: Request):
         text = (
-            "Вопросы бывают простые, сложные и на внимательность. "
-            "В простых вопросах будут варианты ответа."
-            "В сложных подсказок не будет."
+            "Вопросы бывают простые, сложные и на внимательность.\n"
+            "В простых вопросах будут варианты ответа.\n"
+            "В сложных подсказок не будет.\n"
             'А чтобы правильно ответить на вопрос "На внимательность" хорошо бы видеть сам памятник'
-            "или его фотографии."
+            "или его фотографии.\n"
             "Начнем с простого вопроса?"
         )
         return self.make_response(
@@ -136,9 +136,6 @@ class QuestionScene(GlobalScene):
         elif intents.QUESTION_TYPE in request.state["session"]:
             question_type = QuestionType.from_state(request, intents.GAME_QUESTION)
         else:
-            # TODO продумать логику выборка категории
-            # - если пришли из начала викторины, то либо распознали интент
-            #   либо нужно переспросить / выбрать за пользователя
             question_type = QuestionType.simple
         questions = self.get_questions(question_type)
         if questions:
