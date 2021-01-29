@@ -193,11 +193,10 @@ class AnswerScene(GlobalScene):
         nlu_entities = request.request_body["request"]["nlu"]["entities"]
         nlu_numbers = [e["value"] for e in nlu_entities if e["type"] == "YANDEX.NUMBER"]
         answered_correctly = correct_answer in nlu_numbers
-        print(correct_answer, type(correct_answer))
-        print(nlu_numbers)
         text = question["reply_true"] if answered_correctly else question["reply_false"]
+        question_type = QuestionType[question["type"]]
         return self.make_response(
-            f"{text} Задать еще вопрос?",
+            f"{text} Задать еще {question_type.russian()} вопрос?",
             buttons=[button("Да"), button("Нет")],
             state={state.QUESTION_TYPE: question["type"]},
         )
