@@ -60,6 +60,18 @@ class GlobalScene(Scene):
     def handle_local_intents(self, request: Request):
         pass
 
+    def fallback(self, request: Request):
+        save_state = {}
+        # Сохраним важные состояние
+        for save in state.MUST_BE_SAVE:
+            if save in request.state_session:
+                save_state.update({save: request.state_session[save]})
+        return self.make_response(
+            request=request,
+            text="Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос.",
+            state=save_state,
+        )
+
 
 class Welcome(GlobalScene):
     def reply(self, request: Request):
@@ -191,7 +203,7 @@ class AnswerScene(GlobalScene):
             return [r for r in reader if r["id"] == id][0]
 
     def reply(self, request: Request):
-        question_id = request.state_session["question_id"]
+        question_id = request.state_session[state.QUESTION_ID]
         question = self.get_question(question_id)
         # TODO поддержать нечисловые типы ответов для вопросов
         # TODO поддержать частично правильный ответ
@@ -236,12 +248,12 @@ class WhoIs(GlobalScene):
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
         return self.make_response(
-            request, text, card=card, state={"previous": previous}
+            request, text, card=card, state={state.PREVIOUS_SCENE: previous}
         )
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
-            return eval(request.state_session["previous"] + "()")
+            return eval(request.state_session[state.PREVIOUS_SCENE] + "()")
         elif intents.REJECT in request.intents:
             return Welcome()
 

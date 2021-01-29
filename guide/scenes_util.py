@@ -25,17 +25,16 @@ class Scene(ABC):
         return next_scene
 
     @abstractmethod
-    def handle_global_intents(self):
+    def handle_global_intents(self, request):
         raise NotImplementedError()
 
     @abstractmethod
-    def handle_local_intents(request: Request) -> Optional[str]:
+    def handle_local_intents(self, request: Request) -> Optional[str]:
         raise NotImplementedError()
 
+    @abstractmethod
     def fallback(self, request: Request):
-        return self.make_response(
-            "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать фразу."
-        )
+        raise NotImplementedError()
 
     def make_response(
         self,
