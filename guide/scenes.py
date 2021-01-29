@@ -97,6 +97,10 @@ class StartGame(GlobalScene):
     def reply(self, request: Request):
         text = (
             "Вопросы бывают простые, сложные и на внимательность. "
+            "В простых вопросах будут варианты ответа."
+            "В сложных подсказок не будет."
+            'А чтобы правильно ответить на вопрос "На внимательность" хорошо бы видеть сам памятник'
+            "или его фотографии."
             "Начнем с простого вопроса?"
         )
         return self.make_response(
@@ -106,6 +110,7 @@ class StartGame(GlobalScene):
                 button("Сложный"),
                 button("На внимательность"),
             ],
+            state={"question_type": "simple"},
         )
 
     def handle_local_intents(self, request: Request):
@@ -129,7 +134,6 @@ class QuestionScene(GlobalScene):
             question_type = QuestionType.from_state(request, intents.GAME_QUESTION)
         else:
             # TODO продумать логику выборка категории
-            # - если пришли из ответа, то нужно использовать тот же тип вопроса
             # - если пришли из начала викторины, то либо распознали интент
             #   либо нужно переспросить / выбрать за пользователя
             question_type = QuestionType.simple
