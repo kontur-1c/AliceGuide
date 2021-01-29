@@ -158,7 +158,7 @@ class QuestionScene(GlobalScene):
             self._next_scene = AnswerScene()
             return self.make_response(
                 f"Задаю {question_type.russian()} вопрос. {question_text}",
-                state={"question_id": question_id},
+                state={state.QUESTION_ID: question_id},
                 buttons=[button(question["answer"])],
             )
         else:
@@ -196,7 +196,7 @@ class AnswerScene(GlobalScene):
             return [r for r in reader if r["id"] == id][0]
 
     def reply(self, request: Request):
-        question_id = request.state_session["question_id"]
+        question_id = request.state_session[state.QUESTION_ID]
         question = self.get_question(question_id)
         # TODO поддержать нечисловые типы ответов для вопросов
         # TODO поддержать частично правильный ответ

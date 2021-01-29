@@ -47,3 +47,5 @@ REQUEST = {
 def test_fallback():
     response = handler(REQUEST, None)
     assert response
+    assert "Извините" in response["response"]["text"]
+    assert "question_type" in response["session_state"]
