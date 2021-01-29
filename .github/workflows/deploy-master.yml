@@ -9,12 +9,13 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: goodsmileduck/yandex-serverless-action@v1
+      if
       with:
         token: ${{ secrets.YAAUTH }}
         function_id: ${{ secrets.GUIDE_ID }}
         runtime: 'python37-preview'
         memory: '128'
-        environment: DEBUG=True
+        environment: DEBUG=False
         entrypoint: 'guide.main.handler'
         source: '.'
         exclude: './guide/tests'

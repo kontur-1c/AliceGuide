@@ -37,7 +37,7 @@ jobs:
         use-pylint: false
         use-pycodestyle: true
         use-flake8: false
-        use-black: false
+        use-black: true
         use-mypy: false
         use-isort: false
         extra-pylint-options: ""
@@ -49,18 +49,3 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-  deploy:
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - uses: goodsmileduck/yandex-serverless-action@v1
-        with:
-          token: ${{ secrets.YAAUTH }}
-          function_id: ${{ secrets.GUIDE_TEST_ID }}
-          runtime: 'python37-preview'
-          memory: '128'
-          environment: DEBUG=True
-          entrypoint: 'guide.main.handler'
-          source: './'
-          exclude: './guide/tests'
