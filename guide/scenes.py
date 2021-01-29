@@ -249,7 +249,7 @@ class StartTour(GlobalScene):
             text,
             buttons=[button("Да"), button("Нет")],
             card=big_image("213044/3187944dd73678b67180"),
-            state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
+            state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0},
         )
 
     def handle_local_intents(self, request: Request):
@@ -266,7 +266,7 @@ class TourStep(GlobalScene):
         self.repeat = repeat
 
     @staticmethod
-    def get_tour_text(id: int, level=0):
+    def get_tour_text(id: str, level=0):
         with open("guide/tour.csv", mode="r", encoding="utf-8") as in_file:
             reader = csv.DictReader(in_file, delimiter=",")
             return [r for r in reader if r["id"] == id][0]
@@ -276,7 +276,7 @@ class TourStep(GlobalScene):
         if self.repeat:
             id -= 1
         level = request.state_session[state.TOUR_LEVEL]
-        data = self.get_tour_text(id)
+        data = self.get_tour_text(str(id))
         text = data["text"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         return self.make_response(
