@@ -1,0 +1,10 @@
+#!/bin/sh
+mkdir -p build
+cp -r guide build
+yc serverless function version create \
+    --function-id d4e6io3rjdklodialmhr \
+    --source-path build \
+    --runtime python37-preview \
+    --entrypoint guide.main.handler \
+    --memory 128M \
+    --execution-timeout 5s
