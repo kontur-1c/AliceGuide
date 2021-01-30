@@ -74,11 +74,18 @@ class GlobalScene(Scene):
 
 
 class Welcome(GlobalScene):
+    def __init__(self, title=""):
+        self.title = title
+
     def reply(self, request: Request):
         text = (
-            "Я могу провести экскурсию по памятнику "
-            "могу рассказать, про каждую фигуру на памятнике "
-            "а можем сыграть в викторину"
+            self.title
+            + "\n"
+            + (
+                "Я могу провести экскурсию по памятнику, "
+                "могу рассказать, про каждую фигуру на памятнике, "
+                "а можем сыграть в викторину"
+            )
         )
         return self.make_response(
             request,
@@ -224,7 +231,7 @@ class AnswerScene(GlobalScene):
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
         elif intents.REJECT in request.intents:
-            return Welcome()
+            return Welcome("Хорошо, тогда вернемся в начало.")
 
 
 # endregion
@@ -256,7 +263,10 @@ class StartTour(GlobalScene):
         if intents.CONFIRM in request.intents:
             return TourStep()
         elif intents.REJECT in request.intents:
-            return Welcome()
+            return Welcome(
+                "Зря отказываетесь. У нас очень интересная экскурсия."
+                "Но я еще много чего умею."
+            )
         elif intents.REPEAT in request.intents:
             return StartTour()
 
@@ -291,7 +301,10 @@ class TourStep(GlobalScene):
         if intents.CONFIRM in request.intents:
             return TourStep()
         elif intents.REJECT in request.intents:
-            return Welcome()
+            return Welcome(
+                "Хорошо. На этом пока закончим. Возвращайтесь в любое время."
+                "А пока..."
+            )
         elif intents.REPEAT in request.intents:
             return TourStep(True)
 
@@ -321,7 +334,7 @@ class WhoIs(GlobalScene):
         if intents.CONFIRM in request.intents:
             return eval(request.state_session[state.PREVIOUS_SCENE] + "()")
         elif intents.REJECT in request.intents:
-            return Welcome()
+            return Welcome("Тогда вернемся в самое начало.")
 
 
 def _list_scenes():
