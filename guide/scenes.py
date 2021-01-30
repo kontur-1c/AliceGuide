@@ -244,8 +244,6 @@ class AnswerScene(GlobalScene):
 class StartTour(GlobalScene):
     def reply(self, request: Request):
 
-        # TODO: добавить обработку возврата к экскурсии
-
         text = (
             "Начнем нашу экскурсию вокруг этого знаменательного памятника \n"
             "Когда устанете слушать, можете сделать перерыв. Потом начнем с того места, где Вы остановились \n"
@@ -273,6 +271,14 @@ class StartTour(GlobalScene):
             return StartTour()
 
 
+class ContinueTour(GlobalScene):
+    def reply(self, request: Request):
+        pass
+
+    def handle_local_intents(self, request: Request):
+        pass
+
+
 class TourStep(GlobalScene):
     def __init__(self, repeat=False):
         self.repeat = repeat
@@ -289,6 +295,7 @@ class TourStep(GlobalScene):
             id -= 1
         level = request.state_session[state.TOUR_LEVEL]
         data = self.get_tour_text(str(id))
+        # TODO: обработка конце экскурсии
         text = data["text"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         return self.make_response(
