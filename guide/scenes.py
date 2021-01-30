@@ -3,6 +3,7 @@ import enum
 import inspect
 import random
 import sys
+from typing import Union
 
 from guide import intents, state
 from guide.alice import Request
@@ -142,13 +143,19 @@ class StartGame(GlobalScene):
             return QuestionScene()
 
 
-class QuestionScene(GlobalScene):
-    @staticmethod
-    def get_questions(type: QuestionType):
-        with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
-            reader = csv.DictReader(in_file, delimiter=",")
-            return [r for r in reader if r["type"] == type.name]
+def get_questions(question_type: Union[QuestionType, str]):
+    if isinstance(question_type, QuestionType):
+        type_name = question_type.name
+    elif isinstance(question_type, str):
+        type_name = question_type
+    else:
+        raise ValueError("Не правильный тип question_type")
+    with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
+        reader = csv.DictReader(in_file, delimiter=",")
+        return [r for r in reader if r["type"] == type_name]
 
+
+class QuestionScene(GlobalScene):
     def reply(self, request: Request):
         if intents.GAME_QUESTION in request.intents:
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
@@ -156,7 +163,7 @@ class QuestionScene(GlobalScene):
             question_type = QuestionType.from_state(request)
         else:
             question_type = QuestionType.simple
-        questions = self.get_questions(question_type)
+        questions = get_questions(question_type)
         asked = set(request.state_session.get(state.ASKED_QUESTIONS, []))
         not_asked = [q for q in questions if q["id"] not in asked]
         if not_asked:
@@ -178,9 +185,6 @@ class QuestionScene(GlobalScene):
                 buttons=[button(question["answer"])],
             )
         else:
-            # TODO сделать более плавный UX
-            # например предложить пользователю категорию,
-            # в которой еще остались вопросы
             text = (
                 "Вы ответили на все вопросы этой категории! "
                 "Я могу провести экскурсию по памятнику "
@@ -222,15 +226,56 @@ class AnswerScene(GlobalScene):
         nlu_numbers = [e["value"] for e in nlu_entities if e["type"] == "YANDEX.NUMBER"]
         answered_correctly = correct_answer in nlu_numbers
         text = question["reply_true"] if answered_correctly else question["reply_false"]
-        next_question_prompt = {
-            "simple": "Задать еще простой вопрос?",
-            "hard": "Задать еще сложный вопрос?",
-            "attention": "Задать еще вопрос на внимательность?",
-        }[question["type"]]
+
+        questions = get_questions(question["type"])
+        asked = set(request.state_session.get(state.ASKED_QUESTIONS, []))
+        not_asked = [q for q in questions if q["id"] not in asked]
+        print(f"not_asked={not_asked}")
+
+        if len(not_asked) > 0:
+            next_question_prompt = {
+                "simple": "Задать еще простой вопрос?",
+                "hard": "Задать еще сложный вопрос?",
+                "attention": "Задать еще вопрос на внимательность?",
+            }[question["type"]]
+            buttons = [button("Да"), button("Нет")]
+        else:
+            question_type = QuestionType[question["type"]]
+            other_categories = [
+                (t, [q["id"] for q in get_questions(t)])
+                for t in QuestionType
+                if t != question_type and t != QuestionType.unknown
+            ]
+            non_empty_other = [
+                question_type
+                for question_type, question_ids in other_categories
+                if set(question_ids) - asked
+            ]
+            if non_empty_other:
+                left_type_names = [t.russian() for t in non_empty_other]
+                left_type_names_str = ", ".join(f'"{n}"' for n in left_type_names)
+                if len(non_empty_other) == 1:
+                    category_word = "в категории"
+                    move_phrase = "А еще у нас есть экскурсия! К чему перейдем?"
+                else:
+                    category_word = "в категориях"
+                    move_phrase = "К какой перейдем?"
+                next_question_prompt = (
+                    "\n\nПоздравляю! "
+                    "Вы ответили на все вопросы этой категории! "
+                    f"У нас остались вопросы {category_word} {left_type_names_str}. {move_phrase}"
+                )
+                buttons = [button(n) for n in left_type_names]
+                buttons.append(button("Расскажи экскурсию"))
+            else:
+                next_question_prompt = (
+                    "\n\nПоздравляю! " "Вы ответили на все вопросы викторины!"
+                )
+                buttons = [button("Расскажи экскурсию"), button("Выйти из навыка")]
         return self.make_response(
             request,
             f"{text} {next_question_prompt}",
-            buttons=[button("Да"), button("Нет")],
+            buttons=buttons,
             state={state.QUESTION_TYPE: question["type"]},
         )
 
@@ -244,6 +289,10 @@ class AnswerScene(GlobalScene):
             return QuestionScene()
         elif intents.REJECT in request.intents:
             return Welcome("Хорошо, тогда вернемся в начало.")
+        elif intents.START_TOUR in request.intents:
+            return StartTour()
+        elif intents.EXIT in request.intents:
+            return Goodbye()
 
 
 # endregion
