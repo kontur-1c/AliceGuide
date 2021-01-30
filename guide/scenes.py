@@ -273,28 +273,31 @@ class StartTour(GlobalScene):
 
 class ContinueTour(GlobalScene):
     def reply(self, request: Request):
-        pass
+        id = request.state_session[state.TOUR_ID]
+        level = request.state_session[state.TOUR_LEVEL]
+
+        data = _get_tour_data(str(id))
+        text = "В прошлый раз Вы {}" "Продолжим экскурсию?".format(data.retern_text)
+
+        return self.make_response(request, text, buttons=[button("Да"), button("Нет")])
 
     def handle_local_intents(self, request: Request):
-        pass
+        if intents.CONFIRM in request.intents:
+            return TourStep()
+        elif intents.REJECT in request.intents:
+            return StartTour()
 
 
 class TourStep(GlobalScene):
     def __init__(self, repeat=False):
         self.repeat = repeat
 
-    @staticmethod
-    def get_tour_text(id: str, level=0):
-        with open("guide/tour.csv", mode="r", encoding="utf-8") as in_file:
-            reader = csv.DictReader(in_file, delimiter=",")
-            return [r for r in reader if r["id"] == id][0]
-
     def reply(self, request):
         id = request.state_session[state.TOUR_ID]
         if self.repeat:
             id -= 1
         level = request.state_session[state.TOUR_LEVEL]
-        data = self.get_tour_text(str(id))
+        data = _get_tour_data(str(id))
         # TODO: обработка конце экскурсии
         text = data["text"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
@@ -356,6 +359,12 @@ def _list_scenes():
         if inspect.isclass(obj) and issubclass(obj, Scene):
             scenes.append(obj)
     return scenes
+
+
+def _get_tour_data(id: str, level=0):
+    with open("guide/tour.csv", mode="r", encoding="utf-8") as in_file:
+        reader = csv.DictReader(in_file, delimiter=",")
+        return [r for r in reader if r["id"] == id][0]
 
 
 SCENES = {scene.id(): scene for scene in _list_scenes()}
