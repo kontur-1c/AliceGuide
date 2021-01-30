@@ -276,13 +276,19 @@ class StartTour(GlobalScene):
 
 class ContinueTour(GlobalScene):
     def reply(self, request: Request):
-        id = request.state_session[state.TOUR_ID]
+        id = request.state_session[state.TOUR_ID] - 1
+        # как и в повторе сохранено уже следующее состояние
         level = request.state_session[state.TOUR_LEVEL]
 
         data = _get_tour_data(str(id))
         text = "В прошлый раз Вы {}" "Продолжим экскурсию?".format(data["return_text"])
 
-        return self.make_response(request, text, buttons=[button("Да"), button("Нет")])
+        return self.make_response(
+            request,
+            text,
+            buttons=[button("Да"), button("Нет")],
+            state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: level},
+        )
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
@@ -315,7 +321,7 @@ class TourStep(GlobalScene):
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
             return TourStep()
-        elif intents.REJECT in request.intents:
+        elif intents.REJECT in request.intents or intents.BREAK in request.intents:
             return Welcome(
                 "Хорошо. На этом пока закончим. Возвращайтесь в любое время."
                 "А пока..."

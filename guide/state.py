@@ -9,7 +9,6 @@ QUESTION_ID = "question_id"
 ASKED_QUESTIONS = "asked_questions"
 TOUR_ID = "tour_id"
 TOUR_LEVEL = "tour_level"
-BREAK = "break"
 
 # endregion
 
