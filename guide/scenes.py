@@ -235,7 +235,10 @@ class AnswerScene(GlobalScene):
         )
 
     def handle_local_intents(self, request: Request):
-        if intents.CONFIRM in request.intents:
+        if (
+            intents.CONFIRM in request.intents
+            or intents.MORE_QUESTIONS in request.intents
+        ):
             return QuestionScene()
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
@@ -295,7 +298,10 @@ class ContinueTour(GlobalScene):
         )
 
     def handle_local_intents(self, request: Request):
-        if intents.CONFIRM in request.intents:
+        if (
+            intents.CONFIRM in request.intents
+            or intents.CONTINUE_TOUR in request.intents
+        ):
             return TourStep()
         elif intents.REJECT in request.intents:
             return StartTour()
@@ -336,7 +342,10 @@ class TourStep(GlobalScene):
             )
 
     def handle_local_intents(self, request: Request):
-        if intents.CONFIRM in request.intents:
+        if (
+            intents.CONFIRM in request.intents
+            or intents.CONTINUE_TOUR in request.intents
+        ):
             id = request.state_session[state.TOUR_ID]
             data = _get_tour_data(id)
             if data is None:

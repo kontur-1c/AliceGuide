@@ -1,5 +1,5 @@
 root:
-    $QuestionType
+    давай? с? еще? $QuestionType вопрос?
 slots:
     question_type:
         source: $QuestionType
