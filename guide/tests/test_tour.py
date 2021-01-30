@@ -175,6 +175,50 @@ REQUEST_RETURN = {
     "version": "1.0",
 }
 
+REQUEST_END = {
+    "meta": {
+        "locale": "ru-RU",
+        "timezone": "UTC",
+        "client_id": "ru.yandex.searchplugin/7.16 (none none; android 4.4.2)",
+        "interfaces": {
+            "screen": {},
+            "payments": {},
+            "account_linking": {},
+            "geolocation_sharing": {},
+        },
+    },
+    "session": {
+        "message_id": 5,
+        "session_id": "c6c06c06-d5b1-46d3-8830-0263ada075f2",
+        "skill_id": "1f835d35-c640-4c36-b3bc-74ecaa0f71f1",
+        "user": {
+            "user_id": "5416FF55E3C40C32A49D45D68AA101F9AE1445387749DE5B7BEAAB9CD6557C1D"
+        },
+        "application": {
+            "application_id": "218AE790B7125C9F67E9E3234671E8861D9603BD2627726710B9EF8A1CE9748D"
+        },
+        "user_id": "218AE790B7125C9F67E9E3234671E8861D9603BD2627726710B9EF8A1CE9748D",
+        "new": false,
+    },
+    "request": {
+        "command": "да",
+        "original_utterance": "да",
+        "nlu": {
+            "tokens": ["да"],
+            "entities": [],
+            "intents": {"YANDEX.CONFIRM": {"slots": {}}},
+        },
+        "markup": {"dangerous_context": false},
+        "type": "SimpleUtterance",
+    },
+    "state": {
+        "session": {"scene": "TourStep", "tour_id": 4, "tour_level": 0},
+        "user": {},
+        "application": {},
+    },
+    "version": "1.0",
+}
+
 
 def test_tour_start():
     response = handler(REQUEST_START, None)
@@ -204,3 +248,8 @@ def test_tour_return():
     response = handler(REQUEST_RETURN, None)
     assert "В прошлый раз Вы" in response["response"]["text"]
     assert response["session_state"]["tour_id"] == 3
+
+
+def test_tour_end():
+    response = handler(REQUEST_END, None)
+    assert "На этом наша экскурсия закончена" in response["response"]["text"]
