@@ -7,13 +7,15 @@ def big_image(image_id):
 
 
 def image_gallery(image_ids):
-    if not image_ids:
+    if image_ids and image_ids[0] != "":
+
+        items = [{"image_id": image_id} for image_id in image_ids]
+        return {
+            "type": "ImageGallery",
+            "items": items,
+        }
+    else:
         return {}
-    items = [{"image_id": image_id} for image_id in image_ids]
-    return {
-        "type": "ImageGallery",
-        "items": items,
-    }
 
 
 def button(title, payload=None, url=None, hide=False):
