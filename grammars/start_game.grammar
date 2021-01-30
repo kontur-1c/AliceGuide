@@ -1,5 +1,5 @@
 root:
-    $Start $Game
+    $Start? $Game
 
 $Start:
     %lemma
