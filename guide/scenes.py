@@ -98,7 +98,10 @@ class Welcome(GlobalScene):
 
     def handle_local_intents(self, request: Request):
         if intents.START_TOUR in request.intents:
-            return StartTour()
+            if state.TOUR_ID in request.state_session:  # есть сохраненное состояние
+                return ContinueTour()
+            else:
+                return StartTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
 
@@ -277,7 +280,7 @@ class ContinueTour(GlobalScene):
         level = request.state_session[state.TOUR_LEVEL]
 
         data = _get_tour_data(str(id))
-        text = "В прошлый раз Вы {}" "Продолжим экскурсию?".format(data.retern_text)
+        text = "В прошлый раз Вы {}" "Продолжим экскурсию?".format(data["return_text"])
 
         return self.make_response(request, text, buttons=[button("Да"), button("Нет")])
 
