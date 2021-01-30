@@ -6,7 +6,7 @@ import sys
 
 from guide import intents, state
 from guide.alice import Request
-from guide.responce_helpers import button, image_gallery
+from guide.responce_helpers import button, image_gallery, big_image
 from guide.scenes_util import Scene
 
 
@@ -74,11 +74,18 @@ class GlobalScene(Scene):
 
 
 class Welcome(GlobalScene):
+    def __init__(self, title=""):
+        self.title = title
+
     def reply(self, request: Request):
         text = (
-            "Я могу провести экскурсию по памятнику "
-            "могу рассказать, про каждую фигуру на памятнике "
-            "а можем сыграть в викторину"
+            self.title
+            + "\n"
+            + (
+                "Я могу провести экскурсию по памятнику, "
+                "могу рассказать, про каждую фигуру на памятнике, "
+                "а можем сыграть в викторину"
+            )
         )
         return self.make_response(
             request,
@@ -96,13 +103,7 @@ class Welcome(GlobalScene):
             return StartGame()
 
 
-class StartTour(GlobalScene):
-    def reply(self, request: Request):
-        text = "Наша экскурсия начинается с ..."  # TODO сценарий "Экскурсия"
-        return self.make_response(request, text)
-
-    def handle_local_intents(self, request: Request):
-        pass
+# region Quiz
 
 
 class StartGame(GlobalScene):
@@ -132,6 +133,8 @@ class StartGame(GlobalScene):
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
         elif intents.CONFIRM in request.intents:
             question_type = QuestionType.from_state(request)
+        elif intents.REJECT in request.intents:
+            return Welcome("У нас очень интересные вопросы. Попробуйте сыграть потом.")
         if question_type != QuestionType.unknown:
             return QuestionScene()
 
@@ -230,20 +233,101 @@ class AnswerScene(GlobalScene):
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
         elif intents.REJECT in request.intents:
-            return Welcome()
+            return Welcome("Хорошо, тогда вернемся в начало.")
+
+
+# endregion
+
+# region Tour
+
+
+class StartTour(GlobalScene):
+    def reply(self, request: Request):
+
+        # TODO: добавить обработку возврата к экскурсии
+
+        text = (
+            "Начнем нашу экскурсию вокруг этого знаменательного памятника \n"
+            "Когда устанете слушать, можете сделать перерыв. Потом начнем с того места, где Вы остановились \n"
+            "А если захотите узнать по кого-нибудь подробнее, спросите меня. Например, расскажи про князя Владимира \n"
+            "Готовы начать?"
+        )
+
+        return self.make_response(
+            request,
+            text,
+            buttons=[button("Да"), button("Нет")],
+            card=big_image("213044/3187944dd73678b67180"),
+            state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0},
+        )
+
+    def handle_local_intents(self, request: Request):
+        if intents.CONFIRM in request.intents:
+            return TourStep()
+        elif intents.REJECT in request.intents:
+            return Welcome(
+                "Зря отказываетесь. У нас очень интересная экскурсия."
+                "Но я еще много чего умею."
+            )
+        elif intents.REPEAT in request.intents:
+            return StartTour()
+
+
+class TourStep(GlobalScene):
+    def __init__(self, repeat=False):
+        self.repeat = repeat
+
+    @staticmethod
+    def get_tour_text(id: str, level=0):
+        with open("guide/tour.csv", mode="r", encoding="utf-8") as in_file:
+            reader = csv.DictReader(in_file, delimiter=",")
+            return [r for r in reader if r["id"] == id][0]
+
+    def reply(self, request):
+        id = request.state_session[state.TOUR_ID]
+        if self.repeat:
+            id -= 1
+        level = request.state_session[state.TOUR_LEVEL]
+        data = self.get_tour_text(str(id))
+        text = data["text"] + "\nПродолжим?"
+        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
+        return self.make_response(
+            request,
+            text,
+            buttons=[button("Да"), button("Нет")],
+            card=card,
+            state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: 0},
+        )
+
+    def handle_local_intents(self, request: Request):
+        if intents.CONFIRM in request.intents:
+            return TourStep()
+        elif intents.REJECT in request.intents:
+            return Welcome(
+                "Хорошо. На этом пока закончим. Возвращайтесь в любое время."
+                "А пока..."
+            )
+        elif intents.REPEAT in request.intents:
+            return TourStep(True)
+
+
+# endregion
 
 
 class WhoIs(GlobalScene):
     @staticmethod
-    def __get_info(id: str):
+    def get_info(id: str):
         with open("guide/persons.csv", mode="r", encoding="utf-8") as in_file:
             reader = csv.DictReader(in_file, delimiter=",")
             return [r for r in reader if r["id"] == id][0]
 
     def reply(self, request: Request):
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
-        previous = request.state_session.get("scene", "")
-        data = self.__get_info(persona)
+        if state.PREVIOUS_SCENE in request.state_session:
+            previous = request.state_session[state.PREVIOUS_SCENE]
+        else:
+            previous = request.state_session.get("scene", "")
+        data = self.get_info(persona)
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
@@ -255,7 +339,7 @@ class WhoIs(GlobalScene):
         if intents.CONFIRM in request.intents:
             return eval(request.state_session[state.PREVIOUS_SCENE] + "()")
         elif intents.REJECT in request.intents:
-            return Welcome()
+            return Welcome("Тогда вернемся в самое начало.")
 
 
 def _list_scenes():
