@@ -9,7 +9,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - uses: goodsmileduck/yandex-serverless-action@v1
-      if
       with:
         token: ${{ secrets.YAAUTH }}
         function_id: ${{ secrets.GUIDE_ID }}
