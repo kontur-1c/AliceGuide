@@ -1,13 +1,13 @@
 root:
-    $Start $Game
+    $Start? $Game
 
 $Start:
     %lemma
     запусти
     начни
     давай
-    сыграть в
-    поиграть в
+    сыграть в?
+    поиграть в?
 
 $Game:
     %lemma
