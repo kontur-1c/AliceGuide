@@ -50,9 +50,9 @@ class Scene(ABC):
             "text": text,
             "tts": tts if tts is not None else text,
         }
-        if card is not None:
+        if card:
             response["card"] = card
-        if buttons is not None:
+        if buttons:
             response["buttons"] = buttons
         if directives is not None:
             response["directives"] = directives
