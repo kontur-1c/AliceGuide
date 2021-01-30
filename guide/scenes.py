@@ -323,7 +323,10 @@ class WhoIs(GlobalScene):
 
     def reply(self, request: Request):
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
-        previous = request.state_session.get("scene", "")
+        if state.PREVIOUS_SCENE in request.state_session:
+            previous = request.state_session[state.PREVIOUS_SCENE]
+        else:
+            previous = request.state_session.get("scene", "")
         data = self.get_info(persona)
         text = data["short"] + "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
