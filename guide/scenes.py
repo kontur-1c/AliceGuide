@@ -368,14 +368,15 @@ class TourEnd(GlobalScene):
 
     def handle_local_intents(self, request: Request):
         if intents.CONFIRM in request.intents:
-            return TourStep()
-        elif intents.REJECT in request.intents or intents.BREAK in request.intents:
-            return Welcome(
-                "Хорошо. На этом пока закончим. Возвращайтесь в любое время."
-                "А пока..."
-            )
-        elif intents.REPEAT in request.intents:
-            return TourStep(True)
+            return Welcome()
+        elif intents.REJECT in request.intents:
+            return Goodbye()
+
+
+class Goodbye(GlobalScene):
+    def reply(self, request):
+        text = "До новых встреч. Не забудьте поставить оценку нашему навыку"
+        return self.make_response(request, text, end_session=True)
 
 
 # endregion

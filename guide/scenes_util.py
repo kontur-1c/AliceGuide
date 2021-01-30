@@ -45,6 +45,7 @@ class Scene(ABC):
         state=None,
         buttons=None,
         directives=None,
+        end_session=False,
     ):
         response = {
             "text": text,
@@ -56,6 +57,8 @@ class Scene(ABC):
             response["buttons"] = buttons
         if directives is not None:
             response["directives"] = directives
+        if end_session:
+            response["end_session"] = end_session
         webhook_response = {
             "response": response,
             "version": "1.0",
