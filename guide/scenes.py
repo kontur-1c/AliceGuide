@@ -133,6 +133,8 @@ class StartGame(GlobalScene):
             question_type = QuestionType.from_request(request, intents.GAME_QUESTION)
         elif intents.CONFIRM in request.intents:
             question_type = QuestionType.from_state(request)
+        elif intents.REJECT in request.intents:
+            return Welcome("У нас очень интересные вопросы. Попробуйте сыграть потом.")
         if question_type != QuestionType.unknown:
             return QuestionScene()
 
