@@ -160,10 +160,14 @@ class QuestionScene(GlobalScene):
             question = random.choice(not_asked)
             question_id = question["id"]
             question_text = question["text"]
-            self._next_scene = AnswerScene()
+            start_text = {
+                "simple": "Задаю простой вопрос.",
+                "hard": "Задаю сложный вопрос.",
+                "attention": "Задаю вопрос на внимательность.",
+            }[question_type.name]
             return self.make_response(
                 request,
-                f"Задаю {question_type.russian()} вопрос. {question_text}",
+                f"{start_text} {question_text}",
                 state={
                     "question_id": question_id,
                     state.ASKED_QUESTIONS: list(asked) + [question_id],
