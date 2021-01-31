@@ -213,6 +213,7 @@ class AnswerScene(GlobalScene):
     @staticmethod
     def get_question(id: int):
         with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
+
             reader = csv.DictReader(in_file, delimiter=",")
             return [r for r in reader if r["id"] == id][0]
 
@@ -226,13 +227,11 @@ class AnswerScene(GlobalScene):
         nlu_numbers = [e["value"] for e in nlu_entities if e["type"] == "YANDEX.NUMBER"]
         answered_correctly = correct_answer in nlu_numbers
         text = question["reply_true"] if answered_correctly else question["reply_false"]
-
-        questions = get_questions(question["type"])
         asked = set(request.state_session.get(state.ASKED_QUESTIONS, []))
+        questions = get_questions(question["type"])
         not_asked = [q for q in questions if q["id"] not in asked]
-        print(f"not_asked={not_asked}")
-
         if len(not_asked) > 0:
+            have_more_questions = True
             next_question_prompt = {
                 "simple": "Задать еще простой вопрос?",
                 "hard": "Задать еще сложный вопрос?",
@@ -240,6 +239,7 @@ class AnswerScene(GlobalScene):
             }[question["type"]]
             buttons = [button("Да"), button("Нет")]
         else:
+            have_more_questions = False
             question_type = QuestionType[question["type"]]
             other_categories = [
                 (t, [q["id"] for q in get_questions(t)])
@@ -263,28 +263,39 @@ class AnswerScene(GlobalScene):
                 next_question_prompt = (
                     "\n\nПоздравляю! "
                     "Вы ответили на все вопросы этой категории! "
-                    f"У нас остались вопросы {category_word} {left_type_names_str}. {move_phrase}"
+                    f"У нас остались вопросы {category_word} {left_type_names_str}. "
+                    f"{move_phrase}"
                 )
                 buttons = [button(n) for n in left_type_names]
                 buttons.append(button("Расскажи экскурсию"))
             else:
                 next_question_prompt = (
-                    "\n\nПоздравляю! " "Вы ответили на все вопросы викторины!"
+                    "\n\nПоздравляю! "
+                    "Вы ответили на все вопросы викторины! "
+                    "Рассказать экскурсию?"
                 )
                 buttons = [button("Расскажи экскурсию"), button("Выйти из навыка")]
         return self.make_response(
             request,
             f"{text} {next_question_prompt}",
             buttons=buttons,
-            state={state.QUESTION_TYPE: question["type"]},
+            state={
+                state.QUESTION_TYPE: question["type"],
+                state.HAVE_MORE_QUESTIONS: have_more_questions,
+            },
         )
 
     def handle_local_intents(self, request: Request):
         if (
             intents.CONFIRM in request.intents
             or intents.MORE_QUESTIONS in request.intents
-        ):
+        ) and request.state_session[state.HAVE_MORE_QUESTIONS]:
             return QuestionScene()
+        elif (
+            intents.CONFIRM in request.intents
+            and not request.state_session[state.HAVE_MORE_QUESTIONS]
+        ):
+            return StartTour()
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
         elif intents.REJECT in request.intents:
