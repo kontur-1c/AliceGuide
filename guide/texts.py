@@ -1,4 +1,4 @@
-def IDnotUnderstand():
+def i_dont_understand():
     return "Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос."
 
 
@@ -13,7 +13,7 @@ def welcome():
 # region Texts for Quiz
 
 
-def StartQuiz():
+def start_quiz():
     return (
         "Вопросы бывают простые, сложные и на внимательность.\n"
         "В простых вопросах будут варианты ответа.\n"
@@ -24,15 +24,15 @@ def StartQuiz():
     )
 
 
-def RejectContinueQuiz():
+def reject_continue_quiz():
     return "У нас очень интересные вопросы. Попробуйте сыграть потом."
 
 
-def RejectNewQuestion():
+def reject_new_question():
     return "Хорошо, тогда вернемся в начало."
 
 
-def RunOutOfQuestions():
+def run_out_of_questions():
     return (
         "Вы ответили на все вопросы этой категории! "
         "Я могу провести экскурсию по памятнику "
@@ -47,7 +47,7 @@ def RunOutOfQuestions():
 # region Tour
 
 
-def StartTour():
+def start_tour():
     return (
         "Начнем нашу экскурсию вокруг этого знаменательного памятника \n"
         "Когда устанете слушать, можете сделать перерыв. Потом начнем с того места, где Вы остановились \n"
@@ -56,22 +56,22 @@ def StartTour():
     )
 
 
-def RejectStartTour():
+def reject_start_tour():
     return (
         "Зря отказываетесь. У нас очень интересная экскурсия."
         "Но я еще много чего умею."
     )
 
 
-def ContinueTour(return_text: str):
+def continue_tour(return_text: str):
     return f"В прошлый раз Вы {return_text}. Продолжим экскурсию?"
 
 
-def PauseTour():
+def pause_tour():
     return "Хорошо. На этом пока закончим. Возвращайтесь в любое время." "А пока..."
 
 
-def TheEndOfTour():
+def the_end_of_tour():
     return (
         "На этом наша экскурсия закончена. Спасибо, что были с нами. "
         "Обязательно сыграйте в викторину, там есть очень интересные вопросы. "
@@ -83,5 +83,5 @@ def TheEndOfTour():
 # endregion
 
 
-def Goodbye():
+def goodbye():
     return "До новых встреч. Не забудьте поставить оценку нашему навыку"

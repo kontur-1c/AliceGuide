@@ -71,7 +71,7 @@ class GlobalScene(Scene):
                 save_state.update({save: request.state_session[save]})
         return self.make_response(
             request=request,
-            text=texts.IDnotUnderstand(),
+            text=texts.i_dont_understand(),
             state=save_state,
         )
 
@@ -106,7 +106,7 @@ class Welcome(GlobalScene):
 
 class StartGame(GlobalScene):
     def reply(self, request: Request):
-        text = texts.StartQuiz()
+        text = texts.start_quiz()
         return self.make_response(
             request,
             text,
@@ -125,7 +125,7 @@ class StartGame(GlobalScene):
         elif intents.CONFIRM in request.intents:
             question_type = QuestionType.from_state(request)
         elif intents.REJECT in request.intents:
-            return Welcome(texts.RejectContinueQuiz())
+            return Welcome(texts.reject_continue_quiz())
         if question_type != QuestionType.unknown:
             return QuestionScene()
 
@@ -174,7 +174,7 @@ class QuestionScene(GlobalScene):
         else:
             return self.make_response(
                 request,
-                texts.RunOutOfQuestions(),
+                texts.run_out_of_questions(),
                 buttons=[
                     button("Сыграть в викторину"),
                     button("Расскажи экскурсию"),
@@ -280,7 +280,7 @@ class AnswerScene(GlobalScene):
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
         elif intents.REJECT in request.intents:
-            return Welcome(texts.RejectNewQuestion())
+            return Welcome(texts.reject_new_question())
         elif intents.START_TOUR in request.intents:
             return StartTour()
         elif intents.EXIT in request.intents:
@@ -297,7 +297,7 @@ class StartTour(GlobalScene):
 
         return self.make_response(
             request,
-            texts.StartTour(),
+            texts.start_tour(),
             buttons=YES_NO,
             card=big_image("213044/3187944dd73678b67180"),
             state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0},
@@ -307,7 +307,7 @@ class StartTour(GlobalScene):
         if intents.CONFIRM in request.intents:
             return TourStep()
         elif intents.REJECT in request.intents:
-            return Welcome(texts.RejectStartTour())
+            return Welcome(texts.reject_start_tour())
         elif intents.REPEAT in request.intents:
             return StartTour()
 
@@ -322,7 +322,7 @@ class ContinueTour(GlobalScene):
 
         return self.make_response(
             request,
-            texts.ContinueTour(data["return_text"]),
+            texts.continue_tour(data["return_text"]),
             buttons=YES_NO,
             state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: level},
         )
@@ -351,7 +351,7 @@ class TourStep(GlobalScene):
 
             return self.make_response(
                 request,
-                texts.TheEndOfTour(),
+                texts.the_end_of_tour(),
                 buttons=YES_NO,
                 state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
             )
@@ -378,7 +378,7 @@ class TourStep(GlobalScene):
             else:
                 return TourStep()
         elif intents.REJECT in request.intents or intents.BREAK in request.intents:
-            return Welcome(texts.PauseTour())
+            return Welcome(texts.pause_tour())
         elif intents.REPEAT in request.intents:
             return TourStep(True)
 
@@ -391,7 +391,7 @@ class TourEnd(GlobalScene):
 
         return self.make_response(
             request,
-            texts.TheEndOfTour(),
+            texts.the_end_of_tour(),
             buttons=YES_NO,
             state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
         )
@@ -406,7 +406,7 @@ class TourEnd(GlobalScene):
 class Goodbye(GlobalScene):
     def reply(self, request):
 
-        return self.make_response(request, texts.Goodbye(), end_session=True)
+        return self.make_response(request, texts.goodbye(), end_session=True)
 
 
 # endregion
