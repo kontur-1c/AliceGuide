@@ -1,5 +1,7 @@
+import json
 import logging
 import sys
+
 
 from guide.alice import Request
 from guide.scenes import DEFAULT_SCENE, SCENES
@@ -10,6 +12,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 def handler(event, context):
     request = Request(event)
+    print(json.dumps(event))
     current_scene_id = event.get("state", {}).get(STATE_REQUEST_KEY, {}).get("scene")
     if current_scene_id is None:
         return DEFAULT_SCENE().reply(request)

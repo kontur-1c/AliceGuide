@@ -3,12 +3,14 @@ import enum
 import inspect
 import random
 import sys
+
 from typing import Union
 
 from guide import intents, state
 from guide.alice import Request
 from guide.responce_helpers import button, image_gallery, big_image
 from guide.scenes_util import Scene
+import guide.texts as texts
 
 
 class QuestionType(enum.Enum):
@@ -69,7 +71,7 @@ class GlobalScene(Scene):
                 save_state.update({save: request.state_session[save]})
         return self.make_response(
             request=request,
-            text="Извините, я вас не поняла. Пожалуйста, попробуйте переформулировать вопрос.",
+            text=texts.i_dont_understand(),
             state=save_state,
         )
 
@@ -79,15 +81,7 @@ class Welcome(GlobalScene):
         self.title = title
 
     def reply(self, request: Request):
-        text = (
-            self.title
-            + "\n"
-            + (
-                "Я могу провести экскурсию по памятнику, "
-                "могу рассказать, про каждую фигуру на памятнике, "
-                "а можем сыграть в викторину"
-            )
-        )
+        text = self.title + "\n" + texts.welcome()
         return self.make_response(
             request,
             text,
@@ -112,14 +106,7 @@ class Welcome(GlobalScene):
 
 class StartGame(GlobalScene):
     def reply(self, request: Request):
-        text = (
-            "Вопросы бывают простые, сложные и на внимательность.\n"
-            "В простых вопросах будут варианты ответа.\n"
-            "В сложных подсказок не будет.\n"
-            'А чтобы правильно ответить на вопрос "На внимательность" хорошо бы видеть сам памятник '
-            "или его фотографии.\n"
-            "Начнем с простого вопроса?"
-        )
+        text = texts.start_quiz()
         return self.make_response(
             request,
             text,
@@ -138,7 +125,7 @@ class StartGame(GlobalScene):
         elif intents.CONFIRM in request.intents:
             question_type = QuestionType.from_state(request)
         elif intents.REJECT in request.intents:
-            return Welcome("У нас очень интересные вопросы. Попробуйте сыграть потом.")
+            return Welcome(texts.reject_continue_quiz())
         if question_type != QuestionType.unknown:
             return QuestionScene()
 
@@ -185,15 +172,9 @@ class QuestionScene(GlobalScene):
                 buttons=[button(question["answer"])],
             )
         else:
-            text = (
-                "Вы ответили на все вопросы этой категории! "
-                "Я могу провести экскурсию по памятнику "
-                "могу рассказать, про каждую фигуру на памятнике "
-                "а можем сыграть в викторину"
-            )
             return self.make_response(
                 request,
-                text,
+                texts.run_out_of_questions(),
                 buttons=[
                     button("Сыграть в викторину"),
                     button("Расскажи экскурсию"),
@@ -237,7 +218,7 @@ class AnswerScene(GlobalScene):
                 "hard": "Задать еще сложный вопрос?",
                 "attention": "Задать еще вопрос на внимательность?",
             }[question["type"]]
-            buttons = [button("Да"), button("Нет")]
+            buttons = YES_NO
         else:
             have_more_questions = False
             question_type = QuestionType[question["type"]]
@@ -299,7 +280,7 @@ class AnswerScene(GlobalScene):
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
         elif intents.REJECT in request.intents:
-            return Welcome("Хорошо, тогда вернемся в начало.")
+            return Welcome(texts.reject_new_question())
         elif intents.START_TOUR in request.intents:
             return StartTour()
         elif intents.EXIT in request.intents:
@@ -314,17 +295,10 @@ class AnswerScene(GlobalScene):
 class StartTour(GlobalScene):
     def reply(self, request: Request):
 
-        text = (
-            "Начнем нашу экскурсию вокруг этого знаменательного памятника \n"
-            "Когда устанете слушать, можете сделать перерыв. Потом начнем с того места, где Вы остановились \n"
-            "А если захотите узнать по кого-нибудь подробнее, спросите меня. Например, расскажи про князя Владимира \n"
-            "Готовы начать?"
-        )
-
         return self.make_response(
             request,
-            text,
-            buttons=[button("Да"), button("Нет")],
+            texts.start_tour(),
+            buttons=YES_NO,
             card=big_image("213044/3187944dd73678b67180"),
             state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0},
         )
@@ -333,10 +307,7 @@ class StartTour(GlobalScene):
         if intents.CONFIRM in request.intents:
             return TourStep()
         elif intents.REJECT in request.intents:
-            return Welcome(
-                "Зря отказываетесь. У нас очень интересная экскурсия."
-                "Но я еще много чего умею."
-            )
+            return Welcome(texts.reject_start_tour())
         elif intents.REPEAT in request.intents:
             return StartTour()
 
@@ -348,12 +319,11 @@ class ContinueTour(GlobalScene):
         level = request.state_session[state.TOUR_LEVEL]
 
         data = _get_tour_data(id)
-        text = "В прошлый раз Вы {}. Продолжим экскурсию?".format(data["return_text"])
 
         return self.make_response(
             request,
-            text,
-            buttons=[button("Да"), button("Нет")],
+            texts.continue_tour(data["return_text"]),
+            buttons=YES_NO,
             state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: level},
         )
 
@@ -378,16 +348,11 @@ class TourStep(GlobalScene):
         level = request.state_session[state.TOUR_LEVEL]
         data = _get_tour_data(id)
         if data is None:
-            text = (
-                "На этом наша экскурсия закончена. Спасибо, что были с нами. "
-                "Обязательно сыграйте в викторину, там есть очень интересные вопросы. "
-                "Или можете еще раз послушать экскурсию, если что-то пропустили."
-                "Возвращаемся в главное меню?"
-            )
+
             return self.make_response(
                 request,
-                text,
-                buttons=[button("Да"), button("Нет")],
+                texts.the_end_of_tour(),
+                buttons=YES_NO,
                 state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
             )
         else:
@@ -396,7 +361,7 @@ class TourStep(GlobalScene):
             return self.make_response(
                 request,
                 text,
-                buttons=[button("Да"), button("Нет")],
+                buttons=YES_NO,
                 card=card,
                 state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: 0},
             )
@@ -413,10 +378,7 @@ class TourStep(GlobalScene):
             else:
                 return TourStep()
         elif intents.REJECT in request.intents or intents.BREAK in request.intents:
-            return Welcome(
-                "Хорошо. На этом пока закончим. Возвращайтесь в любое время."
-                "А пока..."
-            )
+            return Welcome(texts.pause_tour())
         elif intents.REPEAT in request.intents:
             return TourStep(True)
 
@@ -426,16 +388,11 @@ class TourEnd(GlobalScene):
         self.repeat = repeat
 
     def reply(self, request):
-        text = (
-            "На этом наша экскурсия закончена. Спасибо, что были с нами. "
-            "Обязательно сыграйте в викторину, там есть очень интересные вопросы. "
-            "Или можете еще раз послушать экскурсию, если что-то пропустили."
-            "Возвращаемся в главное меню?"
-        )
+
         return self.make_response(
             request,
-            text,
-            buttons=[button("Да"), button("Нет")],
+            texts.the_end_of_tour(),
+            buttons=YES_NO,
             state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
         )
 
@@ -448,8 +405,8 @@ class TourEnd(GlobalScene):
 
 class Goodbye(GlobalScene):
     def reply(self, request):
-        text = "До новых встреч. Не забудьте поставить оценку нашему навыку"
-        return self.make_response(request, text, end_session=True)
+
+        return self.make_response(request, texts.goodbye(), end_session=True)
 
 
 # endregion
@@ -503,3 +460,5 @@ def _get_tour_data(id: int, level=0):
 SCENES = {scene.id(): scene for scene in _list_scenes()}
 
 DEFAULT_SCENE = Welcome
+
+YES_NO = [button("Да"), button("Нет")]
