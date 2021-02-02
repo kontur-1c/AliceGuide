@@ -12,6 +12,7 @@ TOUR_ID = "tour_id"
 TOUR_LEVEL = "tour_level"
 END_TOUR = "end_of_tour"
 HAVE_MORE_QUESTIONS = "have_more_questions"
+LOCATION = "location"  # 58.52113680728278, 31.27517020919651 (координаты памятника)
 
 # endregion
 

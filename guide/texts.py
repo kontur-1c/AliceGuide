@@ -44,6 +44,30 @@ def run_out_of_questions():
     )
 
 
+def quiz_category_finished(left_type_names_str, num_categories_left):
+    if num_categories_left == 1:
+        category_word = "в категории"
+        move_phrase = "А еще у нас есть экскурсия! К чему перейдем?"
+    else:
+        category_word = "в категориях"
+        move_phrase = "К какой перейдем?"
+    return (
+        "\n\nПоздравляю! "
+        "Вы ответили на все вопросы этой категории! "
+        f"У нас остались вопросы {category_word} {left_type_names_str}. "
+        f"{move_phrase}"
+    )
+
+
+def quiz_finished(num_true, num_total):
+    return (
+        "\n\nПоздравляю! "
+        "Вы ответили на все вопросы викторины! "
+        f"Верных ответов {num_true} из {num_total}. "
+        "Рассказать экскурсию?"
+    )
+
+
 # endregion
 
 
