@@ -3,6 +3,7 @@ import enum
 import inspect
 import random
 import sys
+from functools import lru_cache
 
 from typing import Union
 
@@ -11,45 +12,6 @@ from guide.alice import Request
 from guide.responce_helpers import button, image_gallery, big_image
 from guide.scenes_util import Scene
 import guide.texts as texts
-
-
-class QuestionType(enum.Enum):
-    unknown = 1
-    simple = 2
-    hard = 3
-    attention = 4
-
-    @classmethod
-    def from_request(cls, request: Request, intent_name: str):
-        slot = request.intents[intent_name]["slots"]["question_type"]["value"]
-        if slot == "simple":
-            return cls.simple
-        elif slot == "hard":
-            return cls.hard
-        elif slot == "attention":
-            return cls.attention
-        else:
-            return cls.unknown
-
-    @classmethod
-    def from_state(cls, request: Request):
-        slot = request.state_session[state.QUESTION_TYPE]
-        if slot == "simple":
-            return cls.simple
-        elif slot == "hard":
-            return cls.hard
-        elif slot == "attention":
-            return cls.attention
-        else:
-            return cls.unknown
-
-    def russian(self):
-        return {
-            self.simple: "простой",
-            self.hard: "сложный",
-            self.attention: "на внимательность",
-            self.unknown: "неизвестный",
-        }[self]
 
 
 class GlobalScene(Scene):
@@ -104,6 +66,45 @@ class Welcome(GlobalScene):
 # region Quiz
 
 
+class QuestionType(enum.Enum):
+    unknown = 1
+    simple = 2
+    hard = 3
+    attention = 4
+
+    @classmethod
+    def from_request(cls, request: Request, intent_name: str):
+        slot = request.intents[intent_name]["slots"]["question_type"]["value"]
+        if slot == "simple":
+            return cls.simple
+        elif slot == "hard":
+            return cls.hard
+        elif slot == "attention":
+            return cls.attention
+        else:
+            return cls.unknown
+
+    @classmethod
+    def from_state(cls, request: Request):
+        slot = request.state_session[state.QUESTION_TYPE]
+        if slot == "simple":
+            return cls.simple
+        elif slot == "hard":
+            return cls.hard
+        elif slot == "attention":
+            return cls.attention
+        else:
+            return cls.unknown
+
+    def russian(self):
+        return {
+            self.simple: "простой",
+            self.hard: "сложный",
+            self.attention: "на внимательность",
+            self.unknown: "неизвестный",
+        }[self]
+
+
 class StartGame(GlobalScene):
     def reply(self, request: Request):
         text = texts.start_quiz()
@@ -130,16 +131,23 @@ class StartGame(GlobalScene):
             return QuestionScene()
 
 
+@lru_cache(None)
+def questions_db():
+    result = []
+    with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
+        for row in csv.DictReader(in_file, delimiter=","):
+            result.append(row)
+    return result
+
+
 def get_questions(question_type: Union[QuestionType, str]):
     if isinstance(question_type, QuestionType):
         type_name = question_type.name
     elif isinstance(question_type, str):
         type_name = question_type
     else:
-        raise ValueError("Не правильный тип question_type")
-    with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
-        reader = csv.DictReader(in_file, delimiter=",")
-        return [r for r in reader if r["type"] == type_name]
+        raise ValueError("Unknown question_type")
+    return [r for r in questions_db() if r["type"] == type_name]
 
 
 class QuestionScene(GlobalScene):
@@ -152,8 +160,7 @@ class QuestionScene(GlobalScene):
             question_type = QuestionType.simple
         questions = get_questions(question_type)
         asked = request.state_session.get(state.ASKED_QUESTIONS, {})
-        asked_set = set(asked)
-        not_asked = [q for q in questions if q["id"] not in asked_set]
+        not_asked = [q for q in questions if q["id"] not in asked]
         if not_asked:
             question = random.choice(not_asked)
             question_id = question["id"]
@@ -200,9 +207,7 @@ class QuestionScene(GlobalScene):
 class AnswerScene(GlobalScene):
     @staticmethod
     def get_question(id: int):
-        with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
-            reader = csv.DictReader(in_file, delimiter=",")
-            return [r for r in reader if r["id"] == id][0]
+        return [r for r in questions_db() if r["id"] == id][0]
 
     def reply(self, request: Request):
         question_id = request.state_session[state.QUESTION_ID]
@@ -217,16 +222,15 @@ class AnswerScene(GlobalScene):
             answered_correctly = correct_answer in nlu_numbers
         elif answer_type == "str":
             answered_correctly = (
-                question["answer"] in request["request"]["nlu"]["tokens"]
+                question["answer"].lower() in request["request"]["nlu"]["tokens"]
             )
         else:
             raise ValueError(f"Unknown answer type {answer_type}")
         text = question["reply_true"] if answered_correctly else question["reply_false"]
         asked = request.state_session.get(state.ASKED_QUESTIONS, {})
         asked[question_id] = answered_correctly
-        asked_set = set(asked)
         questions = get_questions(question["type"])
-        not_asked = [q for q in questions if q["id"] not in asked_set]
+        not_asked = [q for q in questions if q["id"] not in asked]
         if len(not_asked) > 0:
             have_more_questions = True
             next_question_prompt = {
@@ -246,7 +250,7 @@ class AnswerScene(GlobalScene):
             non_empty_other = [
                 question_type
                 for question_type, question_ids in other_categories
-                if set(question_ids) - asked_set
+                if set(question_ids) - set(asked)
             ]
             if non_empty_other:
                 left_type_names = [t.russian() for t in non_empty_other]
