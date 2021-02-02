@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import json
 from typing import Optional
 
 from guide.alice import Request
@@ -71,4 +72,5 @@ class Scene(ABC):
                 webhook_response[STATE_RESPONSE_KEY][key] = value
         if state is not None:
             webhook_response[STATE_RESPONSE_KEY].update(state)
+        print(json.dump(webhook_response))
         return webhook_response
