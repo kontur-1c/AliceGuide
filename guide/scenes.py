@@ -3,7 +3,6 @@ import enum
 import inspect
 import random
 import sys
-from functools import lru_cache
 
 from typing import Union
 
@@ -131,7 +130,6 @@ class StartGame(GlobalScene):
             return QuestionScene()
 
 
-@lru_cache(None)
 def questions_db():
     result = []
     with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
