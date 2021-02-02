@@ -344,11 +344,16 @@ class TourStepCommon(GlobalScene):
     def __init__(self):
         self.step_id = 0
         self.step_level = 0
+        self.tour_id = 0
+        self.tour_level = 0
 
     def reply(self, request):
-        id = request.state_session.get(state.TOUR_ID, 0) + self.step_id
-        level = request.state_session.get(state.TOUR_LEVEL, 0) + self.step_level
-        data = _get_tour_data(id, level)
+        self.tour_id = request.state_session.get(state.TOUR_ID, 0) + self.step_id
+        self.tour_level = (
+            request.state_session.get(state.TOUR_LEVEL, 0) + self.step_level
+        )
+
+        data = _get_tour_data(self.tour_id, self.tour_level)
         text = data["text"] + "\n" + texts.more_tour()
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         return self.make_response(
@@ -356,22 +361,35 @@ class TourStepCommon(GlobalScene):
             text,
             buttons=YES_NO,
             card=card,
-            state={state.TOUR_ID: id, state.TOUR_LEVEL: level},
+            state={state.TOUR_ID: self.tour_id, state.TOUR_LEVEL: self.tour_level},
         )
 
     def handle_local_intents(self, request: Request):
-        if (
-            intents.CONFIRM in request.intents
-            or intents.CONTINUE_TOUR in request.intents
-        ):
-            return TourStepLevel()
-        elif intents.REJECT in request.intents:
-            # TODO: Проверить а не закончилась ли экскурсия
-            return TourStep()
-        elif intents.REPEAT in request.intents:
+        if intents.REPEAT in request.intents:
             return TourRepeat()
         elif intents.BREAK in request.intents:
             return Welcome(texts.pause_tour())
+        else:
+            continue_tour = intents.REJECT in request.intents
+            continue_level = (
+                intents.CONFIRM in request.intents
+                or intents.CONTINUE_TOUR in request.intents
+            )
+            if continue_level:
+                # Есть ли что-то по тому же пути?
+                next_id = self.tour_id
+                next_level = self.tour_level + 1
+                if _get_tour_data(next_id, next_level) is not None:
+                    return TourStepLevel()
+                else:
+                    continue_tour = True
+            if continue_tour:
+                next_id = self.tour_id + 1
+                next_level = self.tour_level
+                if _get_tour_data(next_id, next_level) is not None:
+                    return TourStep()
+
+            return TourEnd()
 
 
 # Это передвижение по фигурам
