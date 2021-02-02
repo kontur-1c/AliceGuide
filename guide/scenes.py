@@ -151,8 +151,9 @@ class QuestionScene(GlobalScene):
         else:
             question_type = QuestionType.simple
         questions = get_questions(question_type)
-        asked = set(request.state_session.get(state.ASKED_QUESTIONS, []))
-        not_asked = [q for q in questions if q["id"] not in asked]
+        asked = request.state_session.get(state.ASKED_QUESTIONS, {})
+        asked_set = set(asked)
+        not_asked = [q for q in questions if q["id"] not in asked_set]
         if not_asked:
             question = random.choice(not_asked)
             question_id = question["id"]
@@ -162,14 +163,20 @@ class QuestionScene(GlobalScene):
                 "hard": "Задаю сложный вопрос.",
                 "attention": "Задаю вопрос на внимательность.",
             }[question_type.name]
+            buttons = (
+                [button(v) for v in question["suggest"].split(";")]
+                if question["suggest"]
+                else []
+            )
+            asked.update({question_id: None})
             return self.make_response(
                 request,
                 f"{start_text} {question_text}",
                 state={
                     "question_id": question_id,
-                    state.ASKED_QUESTIONS: list(asked) + [question_id],
+                    state.ASKED_QUESTIONS: asked,
                 },
-                buttons=[button(question["answer"])],
+                buttons=buttons,
             )
         else:
             return self.make_response(
@@ -194,23 +201,32 @@ class AnswerScene(GlobalScene):
     @staticmethod
     def get_question(id: int):
         with open("guide/questions.csv", mode="r", encoding="utf-8") as in_file:
-
             reader = csv.DictReader(in_file, delimiter=",")
             return [r for r in reader if r["id"] == id][0]
 
     def reply(self, request: Request):
         question_id = request.state_session[state.QUESTION_ID]
         question = self.get_question(question_id)
-        # TODO поддержать нечисловые типы ответов для вопросов
-        # TODO поддержать частично правильный ответ
-        correct_answer = int(question["answer"])
-        nlu_entities = request.request_body["request"]["nlu"]["entities"]
-        nlu_numbers = [e["value"] for e in nlu_entities if e["type"] == "YANDEX.NUMBER"]
-        answered_correctly = correct_answer in nlu_numbers
+        answer_type = question["answer_type"]
+        if answer_type == "int":
+            correct_answer = int(question["answer"])
+            nlu_entities = request.request_body["request"]["nlu"]["entities"]
+            nlu_numbers = [
+                e["value"] for e in nlu_entities if e["type"] == "YANDEX.NUMBER"
+            ]
+            answered_correctly = correct_answer in nlu_numbers
+        elif answer_type == "str":
+            answered_correctly = (
+                question["answer"] in request["request"]["nlu"]["tokens"]
+            )
+        else:
+            raise ValueError(f"Unknown answer type {answer_type}")
         text = question["reply_true"] if answered_correctly else question["reply_false"]
-        asked = set(request.state_session.get(state.ASKED_QUESTIONS, []))
+        asked = request.state_session.get(state.ASKED_QUESTIONS, {})
+        asked[question_id] = answered_correctly
+        asked_set = set(asked)
         questions = get_questions(question["type"])
-        not_asked = [q for q in questions if q["id"] not in asked]
+        not_asked = [q for q in questions if q["id"] not in asked_set]
         if len(not_asked) > 0:
             have_more_questions = True
             next_question_prompt = {
@@ -230,31 +246,20 @@ class AnswerScene(GlobalScene):
             non_empty_other = [
                 question_type
                 for question_type, question_ids in other_categories
-                if set(question_ids) - asked
+                if set(question_ids) - asked_set
             ]
             if non_empty_other:
                 left_type_names = [t.russian() for t in non_empty_other]
                 left_type_names_str = ", ".join(f'"{n}"' for n in left_type_names)
-                if len(non_empty_other) == 1:
-                    category_word = "в категории"
-                    move_phrase = "А еще у нас есть экскурсия! К чему перейдем?"
-                else:
-                    category_word = "в категориях"
-                    move_phrase = "К какой перейдем?"
-                next_question_prompt = (
-                    "\n\nПоздравляю! "
-                    "Вы ответили на все вопросы этой категории! "
-                    f"У нас остались вопросы {category_word} {left_type_names_str}. "
-                    f"{move_phrase}"
+                next_question_prompt = texts.quiz_category_finished(
+                    left_type_names_str, len(non_empty_other)
                 )
                 buttons = [button(n) for n in left_type_names]
                 buttons.append(button("Расскажи экскурсию"))
             else:
-                next_question_prompt = (
-                    "\n\nПоздравляю! "
-                    "Вы ответили на все вопросы викторины! "
-                    "Рассказать экскурсию?"
-                )
+                num_true = sum(bool(v) for v in asked.values())
+                num_total = len(asked)
+                next_question_prompt = texts.quiz_finished(num_true, num_total)
                 buttons = [button("Расскажи экскурсию"), button("Выйти из навыка")]
         return self.make_response(
             request,
@@ -263,6 +268,7 @@ class AnswerScene(GlobalScene):
             state={
                 state.QUESTION_TYPE: question["type"],
                 state.HAVE_MORE_QUESTIONS: have_more_questions,
+                state.ASKED_QUESTIONS: asked,
             },
         )
 

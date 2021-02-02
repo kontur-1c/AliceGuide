@@ -156,7 +156,7 @@ def test_answer_question():
     response = handler(REQUEST_ANSWER, None)
     assert response
     assert (
-        response["session_state"]["question_type"] == "simple"
+        response["session_state"]["question_type"] == "attention"
     )  # Сохранили тип вопроса
     assert "Верно" in response["response"]["text"]
 
