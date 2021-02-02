@@ -60,7 +60,7 @@ class GlobalScene(Scene):
         if intents.TELL_ABOUT in request.intents:
             return WhoIs()
         if intents.DEBUG in request.intents:
-            return
+            return Debug()
 
     def handle_local_intents(self, request: Request):
         pass

@@ -231,8 +231,8 @@ def test_tour_first():
         "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
         in response["response"]["text"]
     )
-    assert response["session_user"]["tour_id"] == 1
-    assert response["session_user"]["tour_level"] == 0
+    assert response["user_state_update"]["tour_id"] == 1
+    assert response["user_state_update"]["tour_level"] == 0
 
 
 def test_tour_repeat():
@@ -241,8 +241,8 @@ def test_tour_repeat():
         "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
         in response["response"]["text"]
     )
-    assert response["session_user"]["tour_id"] == 1
-    assert response["session_user"]["tour_level"] == 0
+    assert response["user_state_update"]["tour_id"] == 1
+    assert response["user_state_update"]["tour_level"] == 0
 
 
 def test_tour_return():
