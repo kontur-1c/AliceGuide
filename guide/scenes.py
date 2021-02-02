@@ -19,45 +19,6 @@ from guide.scenes_util import Scene
 import guide.texts as texts
 
 
-class QuestionType(enum.Enum):
-    unknown = 1
-    simple = 2
-    hard = 3
-    attention = 4
-
-    @classmethod
-    def from_request(cls, request: Request, intent_name: str):
-        slot = request.intents[intent_name]["slots"]["question_type"]["value"]
-        if slot == "simple":
-            return cls.simple
-        elif slot == "hard":
-            return cls.hard
-        elif slot == "attention":
-            return cls.attention
-        else:
-            return cls.unknown
-
-    @classmethod
-    def from_state(cls, request: Request):
-        slot = request.state_session[state.QUESTION_TYPE]
-        if slot == "simple":
-            return cls.simple
-        elif slot == "hard":
-            return cls.hard
-        elif slot == "attention":
-            return cls.attention
-        else:
-            return cls.unknown
-
-    def russian(self):
-        return {
-            self.simple: "простой",
-            self.hard: "сложный",
-            self.attention: "на внимательность",
-            self.unknown: "неизвестный",
-        }[self]
-
-
 class GlobalScene(Scene):
     def reply(self, request: Request):
         pass
