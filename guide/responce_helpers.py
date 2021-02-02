@@ -2,8 +2,14 @@ GEOLOCATION_ALLOWED = "Geolocation.Allowed"
 GEOLOCATION_REJECTED = "Geolocation.Rejected"
 
 
-def big_image(image_id):
-    return {"type": "BigImage", "image_id": image_id}
+def big_image(image_id, title=None, description=None):
+    big_image = {"type": "BigImage", "image_id": image_id}
+    if title:
+        big_image["title"] = title
+    if description:
+        big_image["description"] = description
+
+    return big_image
 
 
 def image_gallery(image_ids):

@@ -8,7 +8,13 @@ from typing import Union
 
 from guide import intents, state, coord
 from guide.alice import Request
-from guide.responce_helpers import button, image_gallery, big_image, GEOLOCATION_ALLOWED, GEOLOCATION_REJECTED
+from guide.responce_helpers import (
+    button,
+    image_gallery,
+    big_image,
+    GEOLOCATION_ALLOWED,
+    GEOLOCATION_REJECTED,
+)
 from guide.scenes_util import Scene
 import guide.texts as texts
 
@@ -20,6 +26,8 @@ class GlobalScene(Scene):
     def handle_global_intents(self, request):
         if intents.TELL_ABOUT in request.intents:
             return WhoIs()
+        if intents.DEBUG in request.intents:
+            return Debug()
 
     def handle_local_intents(self, request: Request):
         pass
@@ -36,35 +44,37 @@ class GlobalScene(Scene):
             state=save_state,
         )
 
+
 class HandleGeolocation(GlobalScene):
     def reply(self, request: Request):
         if request.type == GEOLOCATION_ALLOWED:
-            location = request['session']['location']
-            lat = location['lat']
-            lon = location['lon']
-            text = f'Ваши координаты: широта {lat}, долгота {lon}'
-            #58.52113680728278, 31.27517020919651 (координаты памятника)
-            km = coord.haversine(58.52113680728278, 31.27517020919651, float(lat), float(lon))
-            if km > 0.03: 
-                text += '\nБыло бы здорово находится у памятника'
+            location = request["session"]["location"]
+            lat = location["lat"]
+            lon = location["lon"]
+            text = f"Ваши координаты: широта {lat}, долгота {lon}"
+            # 58.52113680728278, 31.27517020919651 (координаты памятника)
+            km = coord.haversine(
+                58.52113680728278, 31.27517020919651, float(lat), float(lon)
+            )
+            if km > 0.03:
+                text += "\nБыло бы здорово находится у памятника"
             else:
-                text += '\nСупер, вы рядом с памятником'
-                        
+                text += "\nСупер, вы рядом с памятником"
+
             return self.make_response(
                 request=request,
                 text=text,
-                state={
-                    state.LOCATION:{
-                        "latitude":lat,
-                        "longitude":lon
-                    }
-                    })
+                state={state.LOCATION: {"latitude": lat, "longitude": lon}},
+            )
         else:
-            text = 'К сожалению, мне не удалось получить ваши координаты.'
-            return self.make_response(request=request,text=text, directives={'request_geolocation': {}})        
+            text = "К сожалению, мне не удалось получить ваши координаты."
+            return self.make_response(
+                request=request, text=text, directives={"request_geolocation": {}}
+            )
 
     def handle_local_intents(self, request: Request):
         pass
+
 
 class Welcome(GlobalScene):
     def __init__(self, title=""):
@@ -72,7 +82,7 @@ class Welcome(GlobalScene):
 
     def reply(self, request: Request):
         text = self.title + "\n" + texts.welcome()
-        directives = {'request_geolocation': {}}
+        directives = {"request_geolocation": {}}
         return self.make_response(
             request,
             text,
@@ -80,22 +90,36 @@ class Welcome(GlobalScene):
                 button("Сыграть в викторину"),
                 button("Расскажи экскурсию"),
             ],
-            directives=directives
+            directives=directives,
         )
 
     def handle_local_intents(self, request: Request):
         if intents.START_TOUR in request.intents:
-            if state.TOUR_ID in request.state_session:  # есть сохраненное состояние
-                return ContinueTour()
+            if state.TOUR_ID in request.state_user:  # есть сохраненное состояние
+                return ReturnToTour()
             else:
-                return StartTour()
+                return StartNewTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
         elif request.type in (
-            GEOLOCATION_ALLOWED, 
+            GEOLOCATION_ALLOWED,
             GEOLOCATION_REJECTED,
         ):
             return HandleGeolocation()
+
+
+class Debug(Welcome):
+    def reply(self, request: Request):
+        text = "Все данные были сброшены" + "\n" + texts.welcome()
+        return self.make_response(
+            request,
+            text,
+            buttons=[
+                button("Сыграть в викторину"),
+                button("Расскажи экскурсию"),
+            ],
+            user_state=dict((el, None) for el in state.USER_STATE),
+        )
 
 
 # region Quiz
@@ -231,7 +255,7 @@ class QuestionScene(GlobalScene):
 
     def handle_local_intents(self, request: Request):
         if intents.START_TOUR in request.intents:
-            return StartTour()
+            return StartNewTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
         else:
@@ -320,13 +344,13 @@ class AnswerScene(GlobalScene):
             intents.CONFIRM in request.intents
             and not request.state_session[state.HAVE_MORE_QUESTIONS]
         ):
-            return StartTour()
+            return StartNewTour()
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()
         elif intents.REJECT in request.intents:
             return Welcome(texts.reject_new_question())
         elif intents.START_TOUR in request.intents:
-            return StartTour()
+            return StartNewTour()
         elif intents.EXIT in request.intents:
             return Goodbye()
 
@@ -336,14 +360,15 @@ class AnswerScene(GlobalScene):
 # region Tour
 
 
-class StartTour(GlobalScene):
+class StartNewTour(GlobalScene):
     def reply(self, request: Request):
         return self.make_response(
             request,
             texts.start_tour(),
             buttons=YES_NO,
-            card=big_image("213044/3187944dd73678b67180"),
-            state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0}            
+            card=big_image(
+                "213044/13a480623796d3b988fd", description=texts.start_tour()
+            ),
         )
 
     def handle_local_intents(self, request: Request):
@@ -352,22 +377,21 @@ class StartTour(GlobalScene):
         elif intents.REJECT in request.intents:
             return Welcome(texts.reject_start_tour())
         elif intents.REPEAT in request.intents:
-            return StartTour()
+            return StartNewTour()
 
 
-class ContinueTour(GlobalScene):
+class ReturnToTour(GlobalScene):
     def reply(self, request: Request):
-        id = request.state_session[state.TOUR_ID] - 1
         # как и в повторе сохранено уже следующее состояние
-        level = request.state_session[state.TOUR_LEVEL]
+        id = request.state_user[state.TOUR_ID]
+        level = request.state_user[state.TOUR_LEVEL]
 
-        data = _get_tour_data(id)
+        data = _get_tour_data(id, level)
 
         return self.make_response(
             request,
             texts.continue_tour(data["return_text"]),
-            buttons=YES_NO,
-            state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: level},
+            buttons=[button("Да"), button("Нет"), button("Повтори")],
         )
 
     def handle_local_intents(self, request: Request):
@@ -376,54 +400,83 @@ class ContinueTour(GlobalScene):
             or intents.CONTINUE_TOUR in request.intents
         ):
             return TourStep()
+        elif intents.REPEAT in request.intents:
+            return TourRepeat()
         elif intents.REJECT in request.intents:
-            return StartTour()
+            return StartNewTour()
 
 
-class TourStep(GlobalScene):
-    def __init__(self, repeat=False):
-        self.repeat = repeat
+class TourStepCommon(GlobalScene):
+    def __init__(self):
+        self.step_id = 0
+        self.step_level = 0
+        self.tour_id = 0
+        self.tour_level = 0
 
     def reply(self, request):
-        id = request.state_session[state.TOUR_ID]
-        if self.repeat:
-            id -= 1
-        level = request.state_session[state.TOUR_LEVEL]
-        data = _get_tour_data(id)
-        if data is None:
+        self.tour_id = request.state_user.get(state.TOUR_ID, 0) + self.step_id
+        self.tour_level = request.state_user.get(state.TOUR_LEVEL, 0) + self.step_level
 
-            return self.make_response(
-                request,
-                texts.the_end_of_tour(),
-                buttons=YES_NO,
-                state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
-            )
-        else:
-            text = data["text"] + "\nПродолжим?"
-            card = image_gallery(image_ids=data["gallery"].split(sep="|"))
-            return self.make_response(
-                request,
-                text,
-                buttons=YES_NO,
-                card=card,
-                state={state.TOUR_ID: id + 1, state.TOUR_LEVEL: 0},
-            )
+        data = _get_tour_data(self.tour_id, self.tour_level)
+        text = data["text"] + "\n" + texts.more_tour()
+        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
+        return self.make_response(
+            request,
+            text,
+            buttons=YES_NO,
+            card=card,
+            user_state={state.TOUR_ID: self.tour_id, state.TOUR_LEVEL: self.tour_level},
+        )
 
     def handle_local_intents(self, request: Request):
-        if (
-            intents.CONFIRM in request.intents
-            or intents.CONTINUE_TOUR in request.intents
-        ):
-            id = request.state_session[state.TOUR_ID]
-            data = _get_tour_data(id)
-            if data is None:
-                return TourEnd()
-            else:
-                return TourStep()
-        elif intents.REJECT in request.intents or intents.BREAK in request.intents:
+        if intents.REPEAT in request.intents:
+            return TourRepeat()
+        elif intents.BREAK in request.intents:
             return Welcome(texts.pause_tour())
-        elif intents.REPEAT in request.intents:
-            return TourStep(True)
+        else:
+            continue_tour = intents.REJECT in request.intents
+            continue_level = (
+                intents.CONFIRM in request.intents
+                or intents.CONTINUE_TOUR in request.intents
+            )
+            if continue_level:
+                # Есть ли что-то по тому же пути?
+                next_id = request.state_user.get(state.TOUR_ID, 0)
+                next_level = request.state_user.get(state.TOUR_LEVEL, 0) + 1
+                if _get_tour_data(next_id, next_level) is not None:
+                    return TourStepLevel()
+                else:
+                    continue_tour = True
+            if continue_tour:
+                next_id = request.state_user.get(state.TOUR_ID, 0) + 1
+                next_level = request.state_user.get(state.TOUR_LEVEL, 0)
+                if _get_tour_data(next_id, next_level) is not None:
+                    return TourStep()
+
+            return TourEnd()
+
+
+# Это передвижение по фигурам
+class TourStep(TourStepCommon):
+    def __init__(self):
+        super().__init__()
+        self.step_id = 1
+        self.step_level = 0
+
+
+# Это дополнительная информация
+class TourStepLevel(TourStepCommon):
+    def __init__(self):
+        super().__init__()
+        self.step_id = 0
+        self.step_level = 1
+
+
+class TourRepeat(TourStepCommon):
+    def __init__(self):
+        super().__init__()
+        self.step_id = 0
+        self.step_level = 0
 
 
 class TourEnd(GlobalScene):
@@ -436,7 +489,7 @@ class TourEnd(GlobalScene):
             request,
             texts.the_end_of_tour(),
             buttons=YES_NO,
-            state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
+            user_state={state.TOUR_ID: None, state.TOUR_LEVEL: None},
         )
 
     def handle_local_intents(self, request: Request):
@@ -492,10 +545,10 @@ def _list_scenes():
     return scenes
 
 
-def _get_tour_data(id: int, level=0):
+def _get_tour_data(id: int, level: int):
     with open("guide/tour.csv", mode="r", encoding="utf-8") as in_file:
         reader = csv.DictReader(in_file, delimiter=",")
-        data = [r for r in reader if r["id"] == str(id)]
+        data = [r for r in reader if r["id"] == str(id) and r["level"] == str(level)]
         if data:
             return data[0]
 

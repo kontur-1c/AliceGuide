@@ -80,7 +80,7 @@ REQUEST_STEP = {
         "type": "SimpleUtterance",
     },
     "state": {
-        "session": {"scene": "StartTour", "tour_id": 1, "tour_level": 0},
+        "session": {"scene": "StartNewTour"},
         "user": {},
         "application": {},
     },
@@ -124,8 +124,8 @@ REQUEST_REPEAT = {
         "type": "SimpleUtterance",
     },
     "state": {
-        "session": {"scene": "TourStep", "tour_id": 2, "tour_level": 0},
-        "user": {},
+        "session": {"scene": "TourStep"},
+        "user": {"tour_id": 1, "tour_level": 0},
         "application": {},
     },
     "version": "1.0",
@@ -168,8 +168,8 @@ REQUEST_RETURN = {
         "type": "SimpleUtterance",
     },
     "state": {
-        "session": {"scene": "Welcome", "tour_id": 3, "tour_level": 0},
-        "user": {},
+        "session": {"scene": "Welcome"},
+        "user": {"tour_id": 3, "tour_level": 0},
         "application": {},
     },
     "version": "1.0",
@@ -212,8 +212,8 @@ REQUEST_END = {
         "type": "SimpleUtterance",
     },
     "state": {
-        "session": {"scene": "TourStep", "tour_id": 4, "tour_level": 0},
-        "user": {},
+        "session": {"scene": "TourStep"},
+        "user": {"tour_id": 3, "tour_level": 0},
         "application": {},
     },
     "version": "1.0",
@@ -222,8 +222,7 @@ REQUEST_END = {
 
 def test_tour_start():
     response = handler(REQUEST_START, None)
-    assert "Начнем нашу экскурсию" in response["response"]["text"]
-    assert response["session_state"]["tour_id"] == 1
+    assert "Я готова начать" in response["response"]["text"]
 
 
 def test_tour_first():
@@ -232,7 +231,8 @@ def test_tour_first():
         "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
         in response["response"]["text"]
     )
-    assert response["session_state"]["tour_id"] == 2
+    assert response["user_state_update"]["tour_id"] == 1
+    assert response["user_state_update"]["tour_level"] == 0
 
 
 def test_tour_repeat():
@@ -241,13 +241,13 @@ def test_tour_repeat():
         "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
         in response["response"]["text"]
     )
-    assert response["session_state"]["tour_id"] == 2
+    assert response["user_state_update"]["tour_id"] == 1
+    assert response["user_state_update"]["tour_level"] == 0
 
 
 def test_tour_return():
     response = handler(REQUEST_RETURN, None)
     assert "В прошлый раз Вы" in response["response"]["text"]
-    assert response["session_state"]["tour_id"] == 3
 
 
 def test_tour_end():

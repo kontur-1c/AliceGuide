@@ -1,5 +1,6 @@
 from math import radians, cos, sin, asin, sqrt
 
+
 def haversine(lat1, lon1, lat2, lon2):
     """
     Вычисляет расстояние в километрах между двумя точками, учитывая окружность Земли.
