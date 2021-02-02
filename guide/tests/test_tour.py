@@ -80,7 +80,7 @@ REQUEST_STEP = {
         "type": "SimpleUtterance",
     },
     "state": {
-        "session": {"scene": "StartTour", "tour_id": 1, "tour_level": 0},
+        "session": {"scene": "StartNewTour"},
         "user": {},
         "application": {},
     },
@@ -222,8 +222,7 @@ REQUEST_END = {
 
 def test_tour_start():
     response = handler(REQUEST_START, None)
-    assert "Начнем нашу экскурсию" in response["response"]["text"]
-    assert response["session_state"]["tour_id"] == 1
+    assert "Я готова начать" in response["response"]["text"]
 
 
 def test_tour_first():
@@ -232,7 +231,8 @@ def test_tour_first():
         "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
         in response["response"]["text"]
     )
-    assert response["session_state"]["tour_id"] == 2
+    assert response["session_state"]["tour_id"] == 1
+    assert response["session_state"]["tour_level"] == 0
 
 
 def test_tour_repeat():
