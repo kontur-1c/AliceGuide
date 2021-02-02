@@ -59,6 +59,8 @@ class GlobalScene(Scene):
     def handle_global_intents(self, request):
         if intents.TELL_ABOUT in request.intents:
             return WhoIs()
+        if intents.DEBUG in request.intents:
+            return
 
     def handle_local_intents(self, request: Request):
         pass
@@ -99,6 +101,20 @@ class Welcome(GlobalScene):
                 return StartNewTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
+
+
+class Debug(Welcome):
+    def reply(self, request: Request):
+        text = "Все данные были сброшены" + "\n" + texts.welcome()
+        return self.make_response(
+            request,
+            text,
+            buttons=[
+                button("Сыграть в викторину"),
+                button("Расскажи экскурсию"),
+            ],
+            user_state=dict((el, None) for el in state.USER_STATE),
+        )
 
 
 # region Quiz
