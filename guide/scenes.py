@@ -340,97 +340,61 @@ class ReturnToTour(GlobalScene):
             return StartNewTour()
 
 
+class TourStepCommon(GlobalScene):
+    def __init__(self):
+        self.step_id = 0
+        self.step_level = 0
+
+    def reply(self, request):
+        id = request.state_session.get(state.TOUR_ID, 0) + self.step_id
+        level = request.state_session.get(state.TOUR_LEVEL, 0) + self.step_level
+        data = _get_tour_data(id, level)
+        text = data["text"] + "\n" + texts.more_tour()
+        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
+        return self.make_response(
+            request,
+            text,
+            buttons=YES_NO,
+            card=card,
+            state={state.TOUR_ID: id, state.TOUR_LEVEL: level},
+        )
+
+    def handle_local_intents(self, request: Request):
+        if (
+            intents.CONFIRM in request.intents
+            or intents.CONTINUE_TOUR in request.intents
+        ):
+            return TourStepLevel()
+        elif intents.REJECT in request.intents:
+            # TODO: Проверить а не закончилась ли экскурсия
+            return TourStep()
+        elif intents.REPEAT in request.intents:
+            return TourRepeat()
+        elif intents.BREAK in request.intents:
+            return Welcome(texts.pause_tour())
+
+
 # Это передвижение по фигурам
-class TourStep(GlobalScene):
-    def reply(self, request):
-        id = request.state_session.get(state.TOUR_ID, 0) + 1
-        level = request.state_session.get(state.TOUR_LEVEL, 0)
-        data = _get_tour_data(id, level)
-        text = data["text"] + "\n" + texts.more_tour()
-        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
-        return self.make_response(
-            request,
-            text,
-            buttons=YES_NO,
-            card=card,
-            state={state.TOUR_ID: id, state.TOUR_LEVEL: level},
-        )
-
-    def handle_local_intents(self, request: Request):
-        if (
-            intents.CONFIRM in request.intents
-            or intents.CONTINUE_TOUR in request.intents
-        ):
-            return TourStepLevel()
-        elif intents.REJECT in request.intents:
-            # TODO: Проверить а не закончилась ли экскурсия
-            return TourStep()
-        elif intents.REPEAT in request.intents:
-            return TourRepeat()
-        elif intents.BREAK in request.intents:
-            return Welcome(texts.pause_tour())
+class TourStep(TourStepCommon):
+    def __init__(self):
+        super().__init__()
+        self.step_id = 1
+        self.step_level = 0
 
 
-class TourStepLevel(GlobalScene):
-    def reply(self, request):
-        id = request.state_session.get(state.TOUR_ID, 0)
-        level = request.state_session.get(state.TOUR_LEVEL, 0) + 1
-        data = _get_tour_data(id, level)
-        text = data["text"] + "\n" + texts.more_tour()
-        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
-        return self.make_response(
-            request,
-            text,
-            buttons=YES_NO,
-            card=card,
-            state={state.TOUR_ID: id, state.TOUR_LEVEL: level},
-        )
-
-    def handle_local_intents(self, request: Request):
-        # TODO: Проверить а не закончилась ли уровни
-        if (
-            intents.CONFIRM in request.intents
-            or intents.CONTINUE_TOUR in request.intents
-        ):
-            return TourStepLevel()
-        elif intents.REJECT in request.intents:
-            # TODO: Проверить а не закончилась ли экскурсия
-            return TourStep()
-        elif intents.REPEAT in request.intents:
-            return TourRepeat()
-        elif intents.BREAK in request.intents:
-            return Welcome(texts.pause_tour())
+# Это дополнительная информация
+class TourStepLevel(TourStepCommon):
+    def __init__(self):
+        super().__init__()
+        self.step_id = 0
+        self.step_level = 1
 
 
-class TourRepeat(GlobalScene):
-    def replay(self, request: Request):
-        id = request.state_session.get(state.TOUR_ID, 0)
-        level = request.state_session.get(state.TOUR_LEVEL, 0)
-        data = _get_tour_data(id, level)
-        text = data["text"] + "\n" + texts.more_tour()
-        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
-        return self.make_response(
-            request,
-            text,
-            buttons=YES_NO,
-            card=card,
-            state={state.TOUR_ID: id, state.TOUR_LEVEL: level},
-        )
-
-    def handle_local_intents(self, request: Request):
-        # TODO: Проверить а не закончилась ли уровни
-        if (
-            intents.CONFIRM in request.intents
-            or intents.CONTINUE_TOUR in request.intents
-        ):
-            return TourStepLevel()
-        elif intents.REJECT in request.intents:
-            # TODO: Проверить а не закончилась ли экскурсия
-            return TourStep()
-        elif intents.REPEAT in request.intents:
-            return TourRepeat()
-        elif intents.BREAK in request.intents:
-            return Welcome(texts.pause_tour())
+class TourRepeat(TourStepCommon):
+    def __init__(self):
+        super().__init__()
+        self.step_id = 0
+        self.step_level = 0
 
 
 class TourEnd(GlobalScene):

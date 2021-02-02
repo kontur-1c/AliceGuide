@@ -124,7 +124,7 @@ REQUEST_REPEAT = {
         "type": "SimpleUtterance",
     },
     "state": {
-        "session": {"scene": "TourStep", "tour_id": 2, "tour_level": 0},
+        "session": {"scene": "TourStep", "tour_id": 1, "tour_level": 0},
         "user": {},
         "application": {},
     },
@@ -241,7 +241,7 @@ def test_tour_repeat():
         "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
         in response["response"]["text"]
     )
-    assert response["session_state"]["tour_id"] == 2
+    assert response["session_state"]["tour_id"] == 1
 
 
 def test_tour_return():
