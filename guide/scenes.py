@@ -6,9 +6,9 @@ import sys
 
 from typing import Union
 
-from guide import intents, state
+from guide import intents, state, coord
 from guide.alice import Request
-from guide.responce_helpers import button, image_gallery, big_image
+from guide.responce_helpers import button, image_gallery, big_image, GEOLOCATION_ALLOWED, GEOLOCATION_REJECTED
 from guide.scenes_util import Scene
 import guide.texts as texts
 
@@ -36,6 +36,35 @@ class GlobalScene(Scene):
             state=save_state,
         )
 
+class HandleGeolocation(GlobalScene):
+    def reply(self, request: Request):
+        if request.type == GEOLOCATION_ALLOWED:
+            location = request['session']['location']
+            lat = location['lat']
+            lon = location['lon']
+            text = f'Ваши координаты: широта {lat}, долгота {lon}'
+            #58.52113680728278, 31.27517020919651 (координаты памятника)
+            km = coord.haversine(58.52113680728278, 31.27517020919651, float(lat), float(lon))
+            if km > 0.03: 
+                text += '\nБыло бы здорово находится у памятника'
+            else:
+                text += '\nСупер, вы рядом с памятником'
+                        
+            return self.make_response(
+                request=request,
+                text=text,
+                state={
+                    state.LOCATION:{
+                        "latitude":lat,
+                        "longitude":lon
+                    }
+                    })
+        else:
+            text = 'К сожалению, мне не удалось получить ваши координаты.'
+            return self.make_response(request=request,text=text, directives={'request_geolocation': {}})        
+
+    def handle_local_intents(self, request: Request):
+        pass
 
 class Welcome(GlobalScene):
     def __init__(self, title=""):
@@ -43,6 +72,7 @@ class Welcome(GlobalScene):
 
     def reply(self, request: Request):
         text = self.title + "\n" + texts.welcome()
+        directives = {'request_geolocation': {}}
         return self.make_response(
             request,
             text,
@@ -50,6 +80,7 @@ class Welcome(GlobalScene):
                 button("Сыграть в викторину"),
                 button("Расскажи экскурсию"),
             ],
+            directives=directives
         )
 
     def handle_local_intents(self, request: Request):
@@ -60,6 +91,11 @@ class Welcome(GlobalScene):
                 return StartTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
+        elif request.type in (
+            GEOLOCATION_ALLOWED, 
+            GEOLOCATION_REJECTED,
+        ):
+            return HandleGeolocation()
 
 
 # region Quiz
@@ -302,13 +338,12 @@ class AnswerScene(GlobalScene):
 
 class StartTour(GlobalScene):
     def reply(self, request: Request):
-
         return self.make_response(
             request,
             texts.start_tour(),
             buttons=YES_NO,
             card=big_image("213044/3187944dd73678b67180"),
-            state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0},
+            state={state.TOUR_ID: 1, state.TOUR_LEVEL: 0}            
         )
 
     def handle_local_intents(self, request: Request):
