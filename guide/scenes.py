@@ -377,15 +377,15 @@ class TourStepCommon(GlobalScene):
             )
             if continue_level:
                 # Есть ли что-то по тому же пути?
-                next_id = self.tour_id
-                next_level = self.tour_level + 1
+                next_id = request.state_session.get(state.TOUR_ID, 0)
+                next_level = request.state_session.get(state.TOUR_LEVEL, 0) + 1
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStepLevel()
                 else:
                     continue_tour = True
             if continue_tour:
-                next_id = self.tour_id + 1
-                next_level = self.tour_level
+                next_id = request.state_session.get(state.TOUR_ID, 0) + 1
+                next_level = request.state_session.get(state.TOUR_LEVEL, 0)
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStep()
 
@@ -481,10 +481,10 @@ def _list_scenes():
     return scenes
 
 
-def _get_tour_data(id: int, level=0):
+def _get_tour_data(id: int, level: int):
     with open("guide/tour.csv", mode="r", encoding="utf-8") as in_file:
         reader = csv.DictReader(in_file, delimiter=",")
-        data = [r for r in reader if r["id"] == str(id)]
+        data = [r for r in reader if r["id"] == str(id) and r["level"] == str(level)]
         if data:
             return data[0]
 
