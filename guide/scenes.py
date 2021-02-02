@@ -93,7 +93,7 @@ class Welcome(GlobalScene):
 
     def handle_local_intents(self, request: Request):
         if intents.START_TOUR in request.intents:
-            if state.TOUR_ID in request.state_session:  # есть сохраненное состояние
+            if state.TOUR_ID in request.state_user:  # есть сохраненное состояние
                 return ReturnToTour()
             else:
                 return StartNewTour()
@@ -316,8 +316,8 @@ class StartNewTour(GlobalScene):
 class ReturnToTour(GlobalScene):
     def reply(self, request: Request):
         # как и в повторе сохранено уже следующее состояние
-        id = request.state_session[state.TOUR_ID]
-        level = request.state_session[state.TOUR_LEVEL]
+        id = request.state_user[state.TOUR_ID]
+        level = request.state_user[state.TOUR_LEVEL]
 
         data = _get_tour_data(id, level)
 
@@ -325,7 +325,6 @@ class ReturnToTour(GlobalScene):
             request,
             texts.continue_tour(data["return_text"]),
             buttons=YES_NO.append("Повтори"),
-            state={state.TOUR_ID: id, state.TOUR_LEVEL: level},
         )
 
     def handle_local_intents(self, request: Request):
@@ -348,10 +347,8 @@ class TourStepCommon(GlobalScene):
         self.tour_level = 0
 
     def reply(self, request):
-        self.tour_id = request.state_session.get(state.TOUR_ID, 0) + self.step_id
-        self.tour_level = (
-            request.state_session.get(state.TOUR_LEVEL, 0) + self.step_level
-        )
+        self.tour_id = request.state_user.get(state.TOUR_ID, 0) + self.step_id
+        self.tour_level = request.state_user.get(state.TOUR_LEVEL, 0) + self.step_level
 
         data = _get_tour_data(self.tour_id, self.tour_level)
         text = data["text"] + "\n" + texts.more_tour()
@@ -361,7 +358,7 @@ class TourStepCommon(GlobalScene):
             text,
             buttons=YES_NO,
             card=card,
-            state={state.TOUR_ID: self.tour_id, state.TOUR_LEVEL: self.tour_level},
+            user_state={state.TOUR_ID: self.tour_id, state.TOUR_LEVEL: self.tour_level},
         )
 
     def handle_local_intents(self, request: Request):
@@ -377,15 +374,15 @@ class TourStepCommon(GlobalScene):
             )
             if continue_level:
                 # Есть ли что-то по тому же пути?
-                next_id = request.state_session.get(state.TOUR_ID, 0)
-                next_level = request.state_session.get(state.TOUR_LEVEL, 0) + 1
+                next_id = request.state_user.get(state.TOUR_ID, 0)
+                next_level = request.state_user.get(state.TOUR_LEVEL, 0) + 1
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStepLevel()
                 else:
                     continue_tour = True
             if continue_tour:
-                next_id = request.state_session.get(state.TOUR_ID, 0) + 1
-                next_level = request.state_session.get(state.TOUR_LEVEL, 0)
+                next_id = request.state_user.get(state.TOUR_ID, 0) + 1
+                next_level = request.state_user.get(state.TOUR_LEVEL, 0)
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStep()
 
@@ -425,7 +422,7 @@ class TourEnd(GlobalScene):
             request,
             texts.the_end_of_tour(),
             buttons=YES_NO,
-            state={state.TOUR_ID: 0, state.TOUR_LEVEL: 0},
+            user_state={state.TOUR_ID: None, state.TOUR_LEVEL: None},
         )
 
     def handle_local_intents(self, request: Request):

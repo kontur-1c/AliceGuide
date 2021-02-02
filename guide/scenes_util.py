@@ -3,7 +3,7 @@ import json
 from typing import Optional
 
 from guide.alice import Request
-from guide.state import STATE_RESPONSE_KEY, PERMANENT_VALUES
+from guide.state import STATE_RESPONSE_KEY, USERSTATE_RESPONSE_KEY, PERMANENT_VALUES
 
 
 class Scene(ABC):
@@ -44,6 +44,7 @@ class Scene(ABC):
         tts=None,
         card=None,
         state=None,
+        user_state=None,
         buttons=None,
         directives=None,
         end_session=False,
@@ -72,5 +73,8 @@ class Scene(ABC):
                 webhook_response[STATE_RESPONSE_KEY][key] = value
         if state is not None:
             webhook_response[STATE_RESPONSE_KEY].update(state)
+        if user_state is not None:
+            webhook_response[USERSTATE_RESPONSE_KEY] = user_state
+
         print(f"RESPONSE {json.dumps(webhook_response)}")
         return webhook_response
