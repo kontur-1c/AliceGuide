@@ -340,7 +340,7 @@ class ReturnToTour(GlobalScene):
         return self.make_response(
             request,
             texts.continue_tour(data["return_text"]),
-            buttons=YES_NO.append("Повтори"),
+            buttons=[button("Да"), button("Нет"), button("Повтори")],
         )
 
     def handle_local_intents(self, request: Request):

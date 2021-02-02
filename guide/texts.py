@@ -80,7 +80,11 @@ def next_step_tour():
 
 
 def continue_tour(return_text: str):
-    return f"В прошлый раз Вы {return_text}. Продолжим экскурсию?"
+    return (
+        f"Вы вернулись к экскурсии. В прошлый раз Вы остановились на {return_text}. "
+        f"Если хотите, могу повторить еще раз. "
+        f"Продолжим экскурсию?"
+    )
 
 
 def pause_tour():
