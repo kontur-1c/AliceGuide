@@ -1,6 +1,6 @@
 STATE_REQUEST_KEY = "session"
 STATE_RESPONSE_KEY = "session_state"
-USERSTATE_RESPONSE_KEY = "session_user"
+USERSTATE_RESPONSE_KEY = "user_state_update"
 
 # region State of dialog
 
