@@ -1,6 +1,9 @@
 root:
+    %lemma
     расскажи про $Persons
-    а? кто такой $Persons
+    расскажи о $Persons
+    расскажи об $Persons
+    кто такой $Persons
 slots:
     who:
         source: $Persons
