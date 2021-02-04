@@ -90,7 +90,6 @@ class Welcome(GlobalScene):
                 button("Сыграть в викторину"),
                 button("Расскажи экскурсию"),
             ],
-            directives=directives,
         )
 
     def handle_local_intents(self, request: Request):
@@ -101,11 +100,6 @@ class Welcome(GlobalScene):
                 return StartNewTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
-        elif request.type in (
-            GEOLOCATION_ALLOWED,
-            GEOLOCATION_REJECTED,
-        ):
-            return HandleGeolocation()
 
 
 class Debug(Welcome):
@@ -415,7 +409,12 @@ class TourStepCommon(GlobalScene):
 
     def reply(self, request):
         self.tour_id = request.state_user.get(state.TOUR_ID, 0) + self.step_id
-        self.tour_level = request.state_user.get(state.TOUR_LEVEL, 0) + self.step_level
+        if self.step_level == -1:
+            self.tour_level = 0
+        else:
+            self.tour_level = (
+                request.state_user.get(state.TOUR_LEVEL, 0) + self.step_level
+            )
 
         data = _get_tour_data(self.tour_id, self.tour_level)
         text = data["text"] + "\n" + texts.more_tour()
@@ -449,7 +448,7 @@ class TourStepCommon(GlobalScene):
                     continue_tour = True
             if continue_tour:
                 next_id = request.state_user.get(state.TOUR_ID, 0) + 1
-                next_level = request.state_user.get(state.TOUR_LEVEL, 0)
+                next_level = 0
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStep()
 
@@ -461,7 +460,7 @@ class TourStep(TourStepCommon):
     def __init__(self):
         super().__init__()
         self.step_id = 1
-        self.step_level = 0
+        self.step_level = -1
 
 
 # Это дополнительная информация
