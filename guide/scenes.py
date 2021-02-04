@@ -409,7 +409,12 @@ class TourStepCommon(GlobalScene):
 
     def reply(self, request):
         self.tour_id = request.state_user.get(state.TOUR_ID, 0) + self.step_id
-        self.tour_level = request.state_user.get(state.TOUR_LEVEL, 0) + self.step_level
+        if self.step_level == -1:
+            self.tour_level = 0
+        else:
+            self.tour_level = (
+                request.state_user.get(state.TOUR_LEVEL, 0) + self.step_level
+            )
 
         data = _get_tour_data(self.tour_id, self.tour_level)
         text = data["text"] + "\n" + texts.more_tour()
@@ -455,7 +460,7 @@ class TourStep(TourStepCommon):
     def __init__(self):
         super().__init__()
         self.step_id = 1
-        self.step_level = 0
+        self.step_level = -1
 
 
 # Это дополнительная информация
