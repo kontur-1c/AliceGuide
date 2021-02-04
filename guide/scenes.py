@@ -528,7 +528,7 @@ class WhoIs(GlobalScene):
             text = texts.i_dont_know()
         else:
             text = data["short"]
-        text += "\nПродолжим?"
+        text += "\nВернемся к тому, где остановились?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
         return self.make_response(
