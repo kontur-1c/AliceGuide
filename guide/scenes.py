@@ -532,7 +532,11 @@ class WhoIs(GlobalScene):
         text += "\nВернемся к тому, где остановились?"
 
         return self.make_response(
-            request, text, card=card, state={state.PREVIOUS_SCENE: previous}
+            request,
+            text,
+            buttons=YES_NO,
+            card=card,
+            state={state.PREVIOUS_SCENE: previous},
         )
 
     def handle_local_intents(self, request: Request):
