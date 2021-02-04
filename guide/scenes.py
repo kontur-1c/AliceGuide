@@ -101,11 +101,6 @@ class Welcome(GlobalScene):
                 return StartNewTour()
         elif intents.START_GAME in request.intents:
             return StartGame()
-        elif request.type in (
-            GEOLOCATION_ALLOWED,
-            GEOLOCATION_REJECTED,
-        ):
-            return HandleGeolocation()
 
 
 class Debug(Welcome):
