@@ -525,10 +525,11 @@ class WhoIs(GlobalScene):
         data = self.get_info(persona)
         if data is None:
             text = texts.i_dont_know()
+            card = []
         else:
             text = data["short"]
+            card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         text += "\nВернемся к тому, где остановились?"
-        card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
         return self.make_response(
             request, text, card=card, state={state.PREVIOUS_SCENE: previous}

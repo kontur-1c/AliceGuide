@@ -156,6 +156,62 @@ REQUEST_RETURN_TOUR = {
     "version": "1.0",
 }
 
+REQUEST_DONT_KNOW = {
+    "meta": {
+        "locale": "ru-RU",
+        "timezone": "UTC",
+        "client_id": "ru.yandex.searchplugin/7.16 (none none; android 4.4.2)",
+        "interfaces": {
+            "screen": {},
+            "payments": {},
+            "account_linking": {},
+            "geolocation_sharing": {},
+        },
+    },
+    "session": {
+        "message_id": 1,
+        "session_id": "6f1794cd-5e7e-4c02-a7b4-6f3c60fd7872",
+        "skill_id": "1f835d35-c640-4c36-b3bc-74ecaa0f71f1",
+        "user": {
+            "user_id": "5416FF55E3C40C32A49D45D68AA101F9AE1445387749DE5B7BEAAB9CD6557C1D"
+        },
+        "application": {
+            "application_id": "218AE790B7125C9F67E9E3234671E8861D9603BD2627726710B9EF8A1CE9748D"
+        },
+        "user_id": "218AE790B7125C9F67E9E3234671E8861D9603BD2627726710B9EF8A1CE9748D",
+        "new": false,
+    },
+    "request": {
+        "command": "кто такой ломоносов",
+        "original_utterance": "кто такой ломоносов",
+        "nlu": {
+            "tokens": ["кто", "такой", "ломоносов"],
+            "entities": [
+                {
+                    "type": "YANDEX.FIO",
+                    "tokens": {"start": 2, "end": 3},
+                    "value": {"last_name": "ломоносов"},
+                }
+            ],
+            "intents": {
+                "tell_about": {
+                    "slots": {
+                        "who": {
+                            "type": "Persons",
+                            "tokens": {"start": 2, "end": 3},
+                            "value": "Lomonosov",
+                        }
+                    }
+                }
+            },
+        },
+        "markup": {"dangerous_context": false},
+        "type": "SimpleUtterance",
+    },
+    "state": {"session": {"scene": "Welcome"}, "user": {}, "application": {}},
+    "version": "1.0",
+}
+
 
 def test_who_is():
     response = handler(REQUEST, None)
@@ -171,3 +227,8 @@ def test_who_is_end():
 def test_who_is_to_tour():
     response = handler(REQUEST_RETURN_TOUR, None)
     assert response["session_state"]["scene"] == "TourStep"
+
+
+def test_who_is_dont_know():
+    response = handler(REQUEST_DONT_KNOW, None)
+    assert response["session_state"]["scene"] == "WhoIs"
