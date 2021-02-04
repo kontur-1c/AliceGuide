@@ -10,6 +10,9 @@ entity QuestionType:
 entity Persons:
     lemma: true
     values:
+        KnazVladimir:
+            князь владимир
+            (владимир)? красно солнышко
         Kirill_Mephodi:
             Кирилл
             Мефодий
@@ -140,6 +143,3 @@ entity Persons:
         Nick:
             Николай Первый
             Николай
-        KnazVladimir:
-            князь владимир
-            (владимир)? красно солнышко
