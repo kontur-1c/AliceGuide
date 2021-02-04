@@ -443,7 +443,7 @@ class TourStepCommon(GlobalScene):
                     continue_tour = True
             if continue_tour:
                 next_id = request.state_user.get(state.TOUR_ID, 0) + 1
-                next_level = request.state_user.get(state.TOUR_LEVEL, 0)
+                next_level = 0
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStep()
 
