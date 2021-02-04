@@ -82,6 +82,7 @@ class Welcome(GlobalScene):
 
     def reply(self, request: Request):
         text = self.title + "\n" + texts.welcome()
+        directives = {"request_geolocation": {}}
         return self.make_response(
             request,
             text,
@@ -89,7 +90,6 @@ class Welcome(GlobalScene):
                 button("Сыграть в викторину"),
                 button("Расскажи экскурсию"),
             ],
-            directives=directives,
         )
 
     def handle_local_intents(self, request: Request):
