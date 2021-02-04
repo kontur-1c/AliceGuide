@@ -82,7 +82,6 @@ class Welcome(GlobalScene):
 
     def reply(self, request: Request):
         text = self.title + "\n" + texts.welcome()
-        directives = {"request_geolocation": {}}
         return self.make_response(
             request,
             text,
