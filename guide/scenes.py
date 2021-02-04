@@ -513,7 +513,9 @@ class WhoIs(GlobalScene):
     def get_info(id: str):
         with open("guide/persons.csv", mode="r", encoding="utf-8") as in_file:
             reader = csv.DictReader(in_file, delimiter=",")
-            return [r for r in reader if r["id"] == id][0]
+            data = [r for r in reader if r["id"] == id]
+            if data:
+                return data[0]
 
     def reply(self, request: Request):
         persona = request.intents[intents.TELL_ABOUT]["slots"]["who"]["value"]
@@ -522,7 +524,11 @@ class WhoIs(GlobalScene):
         else:
             previous = request.state_session.get("scene", "")
         data = self.get_info(persona)
-        text = data["short"] + "\nПродолжим?"
+        if data is None:
+            text = texts.i_dont_know()
+        else:
+            text = data["short"]
+        text += "\nПродолжим?"
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
 
         return self.make_response(
