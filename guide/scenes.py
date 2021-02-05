@@ -276,13 +276,102 @@ class AnswerScene(GlobalScene):
             answered_correctly = (
                 question["answer"].lower() in request["request"]["nlu"]["tokens"]
             )
+        elif answer_type == "multi":
+            
+            asked = request.state_session.get(state.ASKED_QUESTIONS, {})
+
+            if intents.REJECT in request.intents and request.state_session[state.MULTI_ANSWER_CONTINUE] == True:
+                text = "Правильный ответ " + question["answer"]
+                asked[question_id] = True
+                buttons = get_buttons(asked)
+                return self.make_response(request=request,
+                                        text=text,
+                                        buttons=buttons,
+                                        state={
+                                            state.QUESTION_TYPE: question["type"],
+                                            state.MULTI_ANSWER: False,
+                                            state.MULTI_ANSWER_CONTINUE: False,
+                                            state.ASKED_QUESTIONS: asked})
+
+            multi_answer = request.state_session[state.MULTI_ANSWER]
+            if multi_answer is None:
+                multi_answer = []
+
+            # Текущий ответ пользователя
+            answer_user_current = request["request"]["nlu"]["tokens"]
+
+            # Накапливаемый ответ пользователя
+            answer_user_previosly = multi_answer + answer_user_current # [] + []
+
+            # Корректный ответ
+            correct_answer = question["answer"].split(";")
+            
+            set_answer_user_current = set(answer_user_current)
+            set_answer_user_previosly = set(answer_user_previosly)
+            set_correct_answer = set(correct_answer)
+
+            # Исключим слова, которые были в предыдущих ответах
+            set_current_minus_previosly = set_answer_user_current - set_answer_user_previosly
+
+            next_question = False
+
+            if set_correct_answer.issubset(set_answer_user_global): 
+                # Ответ полностью корректен
+                text = "Супер! Все верно."
+                next_question = True
+            elif set_current_minus_previosly & set_correct_answer:
+                # Пользователь дал корректный ответ, но не полный
+                text = """Верно, но есть еще варианты...
+                          Попробуете еще?"""
+            else: 
+                text = """Не угадали...
+                          Попробуете еще?"""
+            
+            # Если пользователь ответил верно, то очищаем предыдущие ответы и переходим к следующему вопросу
+            # Иначе накапливаем ответы в MULTI_ANSWER
+
+            if next_question:
+                multi_answer = []
+                multi_answer_continue = False
+                asked[question_id] = True                
+            else:
+                multi_answer = answer_user_previosly
+                multi_answer_continue = True
+                buttons = YES_NO
+
+            return self.make_response(
+                request=request,
+                text=text,
+                buttons=buttons,
+                state={
+                    state.QUESTION_TYPE: question["type"],
+                    state.MULTI_ANSWER: multi_answer,
+                    state.MULTI_ANSWER_CONTINUE: multi_answer_continue,
+                    state.ASKED_QUESTIONS: asked})
+        
         else:
             raise ValueError(f"Unknown answer type {answer_type}")
+        
+        
         text = question["reply_true"] if answered_correctly else question["reply_false"]
         asked = request.state_session.get(state.ASKED_QUESTIONS, {})
         asked[question_id] = answered_correctly
+        buttons = get_buttons(asked)
+        return self.make_response(
+            request,
+            f"{text} {next_question_prompt}",
+            buttons=buttons,
+            state={
+                state.QUESTION_TYPE: question["type"],
+                state.HAVE_MORE_QUESTIONS: have_more_questions,
+                state.ASKED_QUESTIONS: asked,
+            },
+        )
+
+    def get_buttons(self, asked):
         questions = get_questions(question["type"])
         not_asked = [q for q in questions if q["id"] not in asked]
+        
         if len(not_asked) > 0:
             have_more_questions = True
             next_question_prompt = {
@@ -317,16 +406,8 @@ class AnswerScene(GlobalScene):
                 num_total = len(asked)
                 next_question_prompt = texts.quiz_finished(num_true, num_total)
                 buttons = [button("Расскажи экскурсию"), button("Выйти из навыка")]
-        return self.make_response(
-            request,
-            f"{text} {next_question_prompt}",
-            buttons=buttons,
-            state={
-                state.QUESTION_TYPE: question["type"],
-                state.HAVE_MORE_QUESTIONS: have_more_questions,
-                state.ASKED_QUESTIONS: asked,
-            },
-        )
+
+            return buttons
 
     def handle_local_intents(self, request: Request):
         if (
