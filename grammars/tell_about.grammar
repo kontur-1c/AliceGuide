@@ -1,12 +1,11 @@
 filler:
     о|об|про
+root:
+    расскажи $Persons
+    кто такой $Persons
+    кто такая $Persons
+    кто такие $Persons
 slots:
     who:
         source: $Persons
-        type: Persona
-root:
-    %lemma
-    расскажи $Persons
-    кто такой $Persons
-$Persona:
-    $Persons
+        type: Persons
