@@ -10,17 +10,15 @@ entity QuestionType:
 entity Persons:
     lemma: true
     values:
-        KnazVladimir:
-            князь владимир
-            (владимир)? красно солнышко
         Kirill_Mephodi:
             Кирилл
             Мефодий
             Кирилл и Мефодий
         Helga:
             (княгиня)? Ольга
-        Svatoslavovich:
-            (князь)? Владимир Святославович
+        KnazVladimir:
+            князь владимир
+            (владимир)? красно солнышко
         Rostov:
             Авраамий (Ростовский)?
         Antoniy:
