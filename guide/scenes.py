@@ -415,7 +415,7 @@ class TourStepCommon(GlobalScene):
             )
 
         data = _get_tour_data(self.tour_id, self.tour_level)
-        text = data["text"] + "\n" + texts.more_tour()
+        text = data["text"]
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         return self.make_response(
             request,

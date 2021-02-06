@@ -50,8 +50,8 @@ class Scene(ABC):
         end_session=False,
     ):
         response = {
-            "text": text,
-            "tts": tts if tts is not None else text,
+            "text": text[:1024],
+            "tts": tts[:1024] if tts is not None else text[:1024],
         }
         if card:
             response["card"] = card
