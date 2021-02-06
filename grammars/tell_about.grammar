@@ -1,6 +1,10 @@
+filler:
+    о|об|про
 root:
-    расскажи про $Persons
-    а? кто такой $Persons
+    расскажи $Persons
+    кто такой $Persons
+    кто такая $Persons
+    кто такие $Persons
 slots:
     who:
         source: $Persons

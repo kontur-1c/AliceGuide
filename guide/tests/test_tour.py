@@ -227,20 +227,12 @@ def test_tour_start():
 
 def test_tour_first():
     response = handler(REQUEST_STEP, None)
-    assert (
-        "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
-        in response["response"]["text"]
-    )
     assert response["user_state_update"]["tour_id"] == 1
     assert response["user_state_update"]["tour_level"] == 0
 
 
 def test_tour_repeat():
     response = handler(REQUEST_REPEAT, None)
-    assert (
-        "Прислонившись спиной к колонне с открытой книгой в руках стоит князь Ярослав Мудрый"
-        in response["response"]["text"]
-    )
     assert response["user_state_update"]["tour_id"] == 1
     assert response["user_state_update"]["tour_level"] == 0
 
@@ -252,4 +244,3 @@ def test_tour_return():
 
 def test_tour_end():
     response = handler(REQUEST_END, None)
-    assert "На этом наша экскурсия закончена" in response["response"]["text"]

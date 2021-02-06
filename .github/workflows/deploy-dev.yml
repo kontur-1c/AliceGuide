@@ -18,4 +18,4 @@ jobs:
           environment: DEBUG=True
           entrypoint: 'guide.main.handler'
           source: './'
-          exclude: './guide/tests'
+          exclude: '*.jpg'
