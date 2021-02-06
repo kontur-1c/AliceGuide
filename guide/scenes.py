@@ -391,7 +391,17 @@ class ReturnToTour(GlobalScene):
             intents.CONFIRM in request.intents
             or intents.CONTINUE_TOUR in request.intents
         ):
-            return TourStep()
+            next_id = request.state_user.get(state.TOUR_ID, 0)
+            next_level = request.state_user.get(state.TOUR_LEVEL, 0) + 1
+            if _get_tour_data(next_id, next_level) is not None:
+                return TourStepLevel()
+            else:
+                next_id = request.state_user.get(state.TOUR_ID, 0) + 1
+                next_level = 0
+                if _get_tour_data(next_id, next_level) is not None:
+                    return TourStep()
+                else:
+                    return TourEnd()
         elif intents.REPEAT in request.intents:
             return TourRepeat()
         elif intents.REJECT in request.intents:
@@ -430,7 +440,7 @@ class TourStepCommon(GlobalScene):
             return TourRepeat()
         elif intents.BREAK in request.intents:
             return Welcome(texts.pause_tour())
-        elif intents.REJECT in request.intents:
+        else:
             continue_tour = intents.REJECT in request.intents
             continue_level = (
                 intents.CONFIRM in request.intents
@@ -449,8 +459,8 @@ class TourStepCommon(GlobalScene):
                 next_level = 0
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStep()
-
-            return TourEnd()
+                else:
+                    return TourEnd()
 
 
 # Это передвижение по фигурам
