@@ -375,7 +375,6 @@ class StartNewTour(GlobalScene):
 
 class ReturnToTour(GlobalScene):
     def reply(self, request: Request):
-        # как и в повторе сохранено уже следующее состояние
         id = request.state_user[state.TOUR_ID]
         level = request.state_user[state.TOUR_LEVEL]
 
