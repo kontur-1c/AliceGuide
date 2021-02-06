@@ -375,7 +375,6 @@ class StartNewTour(GlobalScene):
 
 class ReturnToTour(GlobalScene):
     def reply(self, request: Request):
-        # как и в повторе сохранено уже следующее состояние
         id = request.state_user[state.TOUR_ID]
         level = request.state_user[state.TOUR_LEVEL]
 
@@ -392,7 +391,17 @@ class ReturnToTour(GlobalScene):
             intents.CONFIRM in request.intents
             or intents.CONTINUE_TOUR in request.intents
         ):
-            return TourStep()
+            next_id = request.state_user.get(state.TOUR_ID, 0)
+            next_level = request.state_user.get(state.TOUR_LEVEL, 0) + 1
+            if _get_tour_data(next_id, next_level) is not None:
+                return TourStepLevel()
+            else:
+                next_id = request.state_user.get(state.TOUR_ID, 0) + 1
+                next_level = 0
+                if _get_tour_data(next_id, next_level) is not None:
+                    return TourStep()
+                else:
+                    return TourEnd()
         elif intents.REPEAT in request.intents:
             return TourRepeat()
         elif intents.REJECT in request.intents:
@@ -416,7 +425,7 @@ class TourStepCommon(GlobalScene):
             )
 
         data = _get_tour_data(self.tour_id, self.tour_level)
-        text = data["text"] + "\n" + texts.more_tour()
+        text = data["text"]
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         return self.make_response(
             request,
@@ -450,8 +459,8 @@ class TourStepCommon(GlobalScene):
                 next_level = 0
                 if _get_tour_data(next_id, next_level) is not None:
                     return TourStep()
-
-            return TourEnd()
+                else:
+                    return TourEnd()
 
 
 # Это передвижение по фигурам
