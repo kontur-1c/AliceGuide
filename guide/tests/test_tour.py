@@ -239,7 +239,7 @@ def test_tour_repeat():
 
 def test_tour_return():
     response = handler(REQUEST_RETURN, None)
-    assert "В прошлый раз Вы" in response["response"]["text"]
+    assert "В прошлый раз" in response["response"]["text"]
 
 
 def test_tour_end():
