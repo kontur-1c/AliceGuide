@@ -430,7 +430,7 @@ class TourStepCommon(GlobalScene):
             return TourRepeat()
         elif intents.BREAK in request.intents:
             return Welcome(texts.pause_tour())
-        else:
+        elif intents.REJECT in request.intents:
             continue_tour = intents.REJECT in request.intents
             continue_level = (
                 intents.CONFIRM in request.intents
