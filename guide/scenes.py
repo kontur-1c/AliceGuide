@@ -13,7 +13,6 @@ from guide.responce_helpers import (
     image_gallery,
     big_image,
     GEOLOCATION_ALLOWED,
-    GEOLOCATION_REJECTED,
 )
 from guide.scenes_util import Scene
 import guide.texts as texts
@@ -82,7 +81,7 @@ class Welcome(GlobalScene):
 
     def reply(self, request: Request):
         text = self.title + "\n" + texts.welcome()
-        directives = {"request_geolocation": {}}
+        # directives = {"request_geolocation": {}}
         return self.make_response(
             request,
             text,

@@ -1,4 +1,5 @@
 import random
+import math
 
 
 def i_dont_understand():
@@ -69,11 +70,24 @@ def quiz_category_finished(left_type_names_str, num_categories_left):
     )
 
 
+def phi(x, mean, std_deviation):
+    "Cumulative distribution function for the normal distribution"
+    return (1 + math.erf((x - mean) / std_deviation / math.sqrt(2))) / 2
+
+
 def quiz_finished(num_true, num_total):
+    true_proportion = num_true / num_total
+    if true_proportion == 1:
+        more_than = 1
+    elif true_proportion == 0:
+        more_than = 0
+    else:
+        more_than = phi(true_proportion, mean=0.25, std_deviation=0.3)
     return (
         "\n\nПоздравляю! "
-        "Вы ответили на все вопросы викторины! "
-        f"Верных ответов {num_true} из {num_total}. "
+        "Вы ответили на все вопросы викторины!\n"
+        f"Верных ответов {num_true} из {num_total}.\n"
+        f"Вы дали больше верных ответов, чем {more_than*100:.0f}% участников!\n"
         "Рассказать экскурсию?"
     )
 
