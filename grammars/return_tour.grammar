@@ -1,0 +1,22 @@
+root:
+    $Continue|$Remind|$New
+slots:
+    continue:
+        source: $Continue
+    remind:
+        source: $Remind
+    new:
+        source: $New
+
+$Continue:
+    %lemma
+    Продолжить
+    Дальше
+$Remind:
+    %lemma
+    Напомнить
+
+$New:
+    %lemma
+    Сначала
+    Заново
