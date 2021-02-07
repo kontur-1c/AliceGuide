@@ -3,19 +3,14 @@ import enum
 import inspect
 import random
 import sys
-
 from typing import Union
 
-from guide import intents, state, coord
-from guide.alice import Request
-from guide.responce_helpers import (
-    button,
-    image_gallery,
-    big_image,
-    GEOLOCATION_ALLOWED,
-)
-from guide.scenes_util import Scene
 import guide.texts as texts
+from guide import coord, intents, state
+from guide.alice import Request
+from guide.responce_helpers import GEOLOCATION_ALLOWED, big_image, button, image_gallery
+from guide.scenes_util import Scene
+from guide.morph import normal_form
 
 
 class GlobalScene(Scene):
@@ -272,9 +267,10 @@ class AnswerScene(GlobalScene):
             ]
             answered_correctly = correct_answer in nlu_numbers
         elif answer_type == "str":
-            answered_correctly = (
-                question["answer"].lower() in request["request"]["nlu"]["tokens"]
-            )
+            tokens = request["request"]["nlu"]["tokens"]
+            tokens_norm = [normal_form(t) for t in tokens]
+            print(f"morph result: {tokens_norm}")
+            answered_correctly = question["answer"].lower() in tokens + tokens_norm
         else:
             raise ValueError(f"Unknown answer type {answer_type}")
         text = question["reply_true"] if answered_correctly else question["reply_false"]

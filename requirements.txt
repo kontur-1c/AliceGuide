@@ -1,1 +1,2 @@
 pyaspeller
+pymorphy2==0.8
