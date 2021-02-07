@@ -427,7 +427,7 @@ class TourStepCommon(GlobalScene):
             request,
             text,
             tts=tts,
-            buttons=YES_NO,
+            buttons=YES_NO + [button("перерыв")],
             card=card,
             user_state={state.TOUR_ID: self.tour_id, state.TOUR_LEVEL: self.tour_level},
         )
