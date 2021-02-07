@@ -1,6 +1,7 @@
 #!/bin/sh
 mkdir -p build
 cp -r guide build
+cp requirements.txt build
 yc serverless function version create \
     --function-id d4e6io3rjdklodialmhr \
     --source-path build \
