@@ -179,6 +179,17 @@ class Request:
     def intents(self):
         return self.request_body["request"].get("nlu", {}).get("intents", {})
 
+    def slots(self, intent: str):
+        return (
+            self.request_body["request"]
+            .get("nlu", {})
+            .get("intents", {})[intent]
+            .get(
+                "slots",
+            )
+            .keys()
+        )
+
     @property
     def type(self):
         return self.request_body.get("request", {}).get("type")

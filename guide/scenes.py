@@ -383,29 +383,28 @@ class ReturnToTour(GlobalScene):
         return self.make_response(
             request,
             texts.continue_tour(data["return_text"]),
-            buttons=[button("Да"), button("Нет"), button("Повтори")],
+            buttons=[button("Напомни"), button("Дальше"), button("Сначала")],
         )
 
     def handle_local_intents(self, request: Request):
-        if (
-            intents.CONFIRM in request.intents
-            or intents.CONTINUE_TOUR in request.intents
-        ):
-            next_id = request.state_user.get(state.TOUR_ID, 0)
-            next_level = request.state_user.get(state.TOUR_LEVEL, 0) + 1
-            if _get_tour_data(next_id, next_level) is not None:
-                return TourStepLevel()
-            else:
-                next_id = request.state_user.get(state.TOUR_ID, 0) + 1
-                next_level = 0
+        if intents.RETURN_TOUR in request.intents:
+            slots = request.slots(intents.RETURN_TOUR)
+            if intents.SLOT_CONTINUE in slots:
+                next_id = request.state_user.get(state.TOUR_ID, 0)
+                next_level = request.state_user.get(state.TOUR_LEVEL, 0) + 1
                 if _get_tour_data(next_id, next_level) is not None:
-                    return TourStep()
+                    return TourStepLevel()
                 else:
-                    return TourEnd()
-        elif intents.REPEAT in request.intents:
-            return TourRepeat()
-        elif intents.REJECT in request.intents:
-            return StartNewTour()
+                    next_id = request.state_user.get(state.TOUR_ID, 0) + 1
+                    next_level = 0
+                    if _get_tour_data(next_id, next_level) is not None:
+                        return TourStep()
+                    else:
+                        return TourEnd()
+            elif intents.SLOT_REMIND in slots:
+                return TourRepeat()
+            elif intents.SLOT_NEW in slots:
+                return StartNewTour()
 
 
 class TourStepCommon(GlobalScene):
@@ -438,7 +437,7 @@ class TourStepCommon(GlobalScene):
     def handle_local_intents(self, request: Request):
         if intents.REPEAT in request.intents:
             return TourRepeat()
-        elif intents.BREAK in request.intents:
+        elif intents.BREAK_TOUR in request.intents:
             return Welcome(texts.pause_tour())
         else:
             continue_tour = intents.REJECT in request.intents
