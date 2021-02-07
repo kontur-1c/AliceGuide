@@ -425,10 +425,12 @@ class TourStepCommon(GlobalScene):
 
         data = _get_tour_data(self.tour_id, self.tour_level)
         text = data["text"]
+        tts = data["audio"]
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
         return self.make_response(
             request,
             text,
+            tts=tts,
             buttons=YES_NO,
             card=card,
             user_state={state.TOUR_ID: self.tour_id, state.TOUR_LEVEL: self.tour_level},
