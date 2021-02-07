@@ -418,6 +418,10 @@ class TourStepCommon(GlobalScene):
             )
 
         data = _get_tour_data(self.tour_id, self.tour_level)
+        if not data:
+            self.tour_id = 1
+            self.tour_level = 0
+            data = _get_tour_data(self.tour_id, self.tour_level)
         text = data["text"]
         tts = data["audio"]
         card = image_gallery(image_ids=data["gallery"].split(sep="|"))
