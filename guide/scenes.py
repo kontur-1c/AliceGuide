@@ -324,15 +324,13 @@ class AnswerScene(GlobalScene):
         )
 
     def handle_local_intents(self, request: Request):
+        have_more_questions = request.state_session.get(state.HAVE_MORE_QUESTIONS, True)
         if (
             intents.CONFIRM in request.intents
             or intents.MORE_QUESTIONS in request.intents
-        ) and request.state_session[state.HAVE_MORE_QUESTIONS]:
+        ) and have_more_questions:
             return QuestionScene()
-        elif (
-            intents.CONFIRM in request.intents
-            and not request.state_session[state.HAVE_MORE_QUESTIONS]
-        ):
+        elif intents.CONFIRM in request.intents and not have_more_questions:
             return StartNewTour()
         elif intents.GAME_QUESTION in request.intents:
             return QuestionScene()

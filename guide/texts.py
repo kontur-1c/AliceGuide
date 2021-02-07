@@ -59,7 +59,7 @@ def quiz_category_finished(left_type_names_str, num_categories_left):
         move_phrase = "А еще у нас есть экскурсия! К чему перейдем?"
     else:
         category_word = "в категориях"
-        move_phrase = "К какой перейдем?"
+        move_phrase = "Какую выберете?"
     return (
         "\n\nПоздравляю! "
         "Вы ответили на все вопросы этой категории! "
