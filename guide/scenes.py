@@ -356,6 +356,7 @@ class StartNewTour(GlobalScene):
             card=big_image(
                 "213044/13a480623796d3b988fd", description=texts.start_tour()
             ),
+            user_state={state.TOUR_ID: None, state.TOUR_LEVEL: None},
         )
 
     def handle_local_intents(self, request: Request):
