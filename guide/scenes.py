@@ -154,27 +154,24 @@ class QuestionType(enum.Enum):
 
 class StartGame(GlobalScene):
     def reply(self, request: Request):
-        text = texts.start_quiz()
         asked = request.state_session.get(state.ASKED_QUESTIONS, {})
         question_by_categories = [
             (t, [q["id"] for q in get_questions(t)])
             for t in QuestionType
             if t != QuestionType.unknown
         ]
-        non_empty_other = [
+        non_empty_categories = [
             question_type
             for question_type, question_ids in question_by_categories
             if set(question_ids) - set(asked)
         ]
-        if non_empty_other:
-            left_type_names = [t.russian() for t in non_empty_other]
-            left_type_names_str = ", ".join(f'"{n}"' for n in left_type_names)
-            next_question_prompt = texts.quiz_category_finished(
-                left_type_names_str, len(non_empty_other)
-            )
+        if non_empty_categories:
+            left_type_names = [t.russian() for t in non_empty_categories]
+            all_categories_present = len(non_empty_categories) == 3
             buttons = [button(n) for n in left_type_names]
             state_update = {}
         else:
+            all_categories_present = True
             buttons = [
                 button("Простой"),
                 button("Сложный"),
@@ -185,7 +182,7 @@ class StartGame(GlobalScene):
         new_state.update(state_update)
         return self.make_response(
             request,
-            text,
+            text=texts.start_quiz(all_categories_present),
             buttons=buttons,
             state=new_state,
         )
