@@ -36,7 +36,9 @@ def welcome():
 
 
 def start_quiz(all_categories=True):
-    suggest_simple = "\nНачнем с простого вопроса?" if all_categories else ""
+    suggest_simple = (
+        "\nНачнем с простого вопроса?" if all_categories else "\nС какого начнем?"
+    )
     return (
         "Вопросы бывают простые, сложные и на внимательность.\n"
         "В простых вопросах будут варианты ответа.\n"
