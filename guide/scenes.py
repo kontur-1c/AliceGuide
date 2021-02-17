@@ -22,6 +22,8 @@ class GlobalScene(Scene):
             return WhoIs()
         if intents.DEBUG in request.intents:
             return Debug()
+        if intents.HELP in request.intents or intents.CAN_DO in request.intents:
+            return Welcome()
 
     def handle_local_intents(self, request: Request):
         pass
