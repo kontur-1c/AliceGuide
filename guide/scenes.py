@@ -293,7 +293,9 @@ class AnswerScene(GlobalScene):
             tokens = request["request"]["nlu"]["tokens"]
             tokens_norm = [normal_form(t) for t in tokens]
             print(f"morph result: {tokens_norm}")
-            answered_correctly = question["answer"].lower() in tokens + tokens_norm
+            user_words_and_forms = set(tokens + tokens_norm)
+            correct_answers = set(question["answer"].lower().split(";"))
+            answered_correctly = len(user_words_and_forms & correct_answers) > 0
         else:
             raise ValueError(f"Unknown answer type {answer_type}")
         text = question["reply_true"] if answered_correctly else question["reply_false"]
