@@ -156,16 +156,37 @@ class QuestionType(enum.Enum):
 
 class StartGame(GlobalScene):
     def reply(self, request: Request):
-        text = texts.start_quiz()
-        return self.make_response(
-            request,
-            text,
-            buttons=[
+        asked = request.state_session.get(state.ASKED_QUESTIONS, {})
+        question_by_categories = [
+            (t, [q["id"] for q in get_questions(t)])
+            for t in QuestionType
+            if t != QuestionType.unknown
+        ]
+        non_empty_categories = [
+            question_type
+            for question_type, question_ids in question_by_categories
+            if set(question_ids) - set(asked)
+        ]
+        if non_empty_categories:
+            left_type_names = [t.russian() for t in non_empty_categories]
+            all_categories_present = len(non_empty_categories) == 3
+            buttons = [button(n) for n in left_type_names]
+            state_update = {}
+        else:
+            all_categories_present = True
+            buttons = [
                 button("Простой"),
                 button("Сложный"),
                 button("На внимательность"),
-            ],
-            state={state.QUESTION_TYPE: "simple"},
+            ]
+            state_update = {state.ASKED_QUESTIONS: {}}
+        new_state = {state.QUESTION_TYPE: "simple"}
+        new_state.update(state_update)
+        return self.make_response(
+            request,
+            text=texts.start_quiz(all_categories_present),
+            buttons=buttons,
+            state=new_state,
         )
 
     def handle_local_intents(self, request: Request):
@@ -314,6 +335,7 @@ class AnswerScene(GlobalScene):
                 num_total = len(asked)
                 next_question_prompt = texts.quiz_finished(num_true, num_total)
                 buttons = [button("Расскажи экскурсию"), button("Выйти из навыка")]
+                asked = {}
         return self.make_response(
             request,
             f"{text} {next_question_prompt}",
